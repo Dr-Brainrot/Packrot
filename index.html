@@ -1,0 +1,258 @@
+<style>
+/* --- CSS für das Design --- */
+.brainrot-game {
+    padding: 25px;
+    max-width: 600px;
+    margin: 20px auto;
+    border: 3px solid #d32f2f; /* Rot für Italian Vibe */
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+}
+.brainrot-game h2 {
+    color: #d32f2f;
+    text-align: center;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+.coin-display {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffc107; /* Gold/Gelb für Münzen */
+    text-shadow: 1px 1px 1px #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.fight-button, .pack-button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.fight-button {
+    background-color: #d32f2f; /* Rot */
+    color: white;
+}
+.fight-button:hover {
+    background-color: #c62828;
+}
+.pack-button {
+    background-color: #1976d2; /* Blau */
+    color: white;
+}
+.pack-button:hover {
+    background-color: #1565c0;
+}
+#char-select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
+#game-messages {
+    padding: 15px;
+    background-color: #e0f7fa;
+    border: 1px solid #b2ebf2;
+    border-radius: 4px;
+    margin-top: 15px;
+    white-space: pre-wrap; /* Behält Zeilenumbrüche */
+}
+#collection-list li {
+    list-style-type: none;
+    padding: 5px 0;
+    border-bottom: 1px dashed #eee;
+}
+#collection-list {
+    padding-left: 0;
+}
+</style>
+
+<div class="brainrot-game">
+    <h2>Italian Brainrot TCG: La Sfida 🤌</h2>
+    
+    <div id="coin-display" class="coin-display">Münzen: 0</div>
+    
+    <h3>Wähle deinen Kämpfer:</h3>
+    <select id="char-select"></select>
+    
+    <button class="fight-button" onclick="handleFightClick()">⚔️ Starte Kampf</button>
+    <button class="pack-button" onclick="handlePackClick()">🎁 Pack öffnen (3 Münzen)</button>
+    
+    <hr>
+    
+    <h3>Nachrichten:</h3>
+    <div id="game-messages">Willkommen in Italien! Wähle deinen Brainrot!</div>
+    
+    <hr>
+    
+    <h3>Deine Sammlung:</h3>
+    <ul id="collection-list"></ul>
+</div>
+
+<script>
+// --- START DES JAVASCRIPT CODES ---
+
+// 1. SPIELDATEN
+const CHARACTER_POOL = [
+    { name: "Gigi D'Agostino", atk: 50, luck: 70, rarity: "Legendär", weight: 2 },
+    { name: "Ciro", atk: 80, luck: 30, rarity: "Episch", weight: 5 },
+    { name: "Pino", atk: 65, luck: 55, rarity: "Selten", weight: 10 },
+    { name: "Maria", atk: 40, luck: 80, rarity: "Selten", weight: 10 },
+    { name: "Il Baffo", atk: 75, luck: 45, rarity: "Ungewöhnlich", weight: 15 },
+    { name: "La Nonna", atk: 35, luck: 90, rarity: "Ungewöhnlich", weight: 15 },
+    { name: "Luca", atk: 50, luck: 60, rarity: "Gewöhnlich", weight: 20 },
+    { name: "Giulia", atk: 45, luck: 65, rarity: "Gewöhnlich", weight: 20 },
+    { name: "Franco", atk: 60, luck: 50, rarity: "Gewöhnlich", weight: 20 },
+    { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20 },
+];
+
+let collection = {
+    "Luca": 1,
+    "Franco": 1,
+    "Pino": 1,
+};
+let coins = 0; // Start mit 0 Münzen
+
+const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char => 
+    Array(char.weight).fill(char)
+);
+
+// 2. SPIELLOGIK (Kernfunktionen)
+
+function calculateStrength(charData) {
+    const baseAtk = charData.atk;
+    const luckRoll = Math.floor(Math.random() * 100) + 1;
+    let bonus = 0;
+    if (luckRoll <= charData.luck) {
+        bonus = (baseAtk * 0.33);
+    }
+    return baseAtk + bonus;
+}
+
+function drawCard() {
+    const randomIndex = Math.floor(Math.random() * DRAW_WEIGHTS.length);
+    return DRAW_WEIGHTS[randomIndex];
+}
+
+function startFight(playerCharName) {
+    const playerChar = CHARACTER_POOL.find(c => c.name === playerCharName);
+    const opponentChar = drawCard(); // Gegner aus dem Pool
+
+    if (!playerChar) return "Fehler: Charakter nicht gefunden.";
+
+    const playerStrength = calculateStrength(playerChar);
+    const opponentStrength = calculateStrength(opponentChar);
+    
+    let resultMessage = "";
+
+    if (playerStrength > opponentStrength) {
+        coins += 1;
+        resultMessage = `🏆 **SIEG!** Du gewinnst 1 Coin!\nDu hast **${playerChar.name}** (ATK: ${playerStrength.toFixed(1)}) besiegt **${opponentChar.name}** (ATK: ${opponentStrength.toFixed(1)}).`;
+    } else if (playerStrength < opponentStrength) {
+        resultMessage = `😔 **NIEDERLAGE!** Keine Münze.\nDu hast mit **${playerChar.name}** (ATK: ${playerStrength.toFixed(1)}) gegen **${opponentChar.name}** (ATK: ${opponentStrength.toFixed(1)}) verloren.`;
+    } else {
+        resultMessage = `🤝 **UNENTSCHIEDEN!** Keine Münze. Beide hatten eine Stärke von ${playerStrength.toFixed(1)}.`;
+    }
+
+    return resultMessage;
+}
+
+function openPack() {
+    if (coins < 3) {
+        return "FEHLER: Du brauchst 3 Münzen!";
+    }
+
+    coins -= 3;
+    const newCard = drawCard();
+    collection[newCard.name] = (collection[newCard.name] || 0) + 1;
+
+    return `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${newCard.rarity})!\nATK: ${newCard.atk}, LUCK: ${newCard.luck}`;
+}
+
+// 3. UI-MANIPULATION
+
+function updateUI() {
+    // 1. Münzen aktualisieren
+    document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
+    
+    // 2. Sammlung aktualisieren
+    const collectionList = document.getElementById('collection-list');
+    collectionList.innerHTML = '';
+    
+    // Sortiere die Charaktere für die Anzeige
+    const sortedCollection = Object.keys(collection)
+        .filter(name => collection[name] > 0)
+        .map(name => {
+            const charData = CHARACTER_POOL.find(c => c.name === name);
+            return { name, count: collection[name], charData };
+        })
+        .sort((a, b) => b.charData.atk - a.charData.atk); // Nach ATK sortieren
+
+    sortedCollection.forEach(({ name, count, charData }) => {
+        const li = document.createElement('li');
+        li.className = 'card-list-item';
+        li.innerHTML = `<strong>${count}x ${name}</strong> (${charData.rarity}) - ATK: ${charData.atk}, LUCK: ${charData.luck}`;
+        collectionList.appendChild(li);
+    });
+    
+    // 3. Auswahlfeld aktualisieren
+    const charSelect = document.getElementById('char-select');
+    const selectedValue = charSelect.value;
+    charSelect.innerHTML = '';
+
+    const ownedChars = Object.keys(collection).filter(name => collection[name] > 0);
+    
+    if (ownedChars.length === 0) {
+        const option = document.createElement('option');
+        option.textContent = "Keine Kämpfer verfügbar!";
+        charSelect.appendChild(option);
+    } else {
+        ownedChars.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            if (name === selectedValue) {
+                option.selected = true;
+            }
+            charSelect.appendChild(option);
+        });
+        // Setze die Auswahl auf den ersten Charakter, wenn die alte Auswahl nicht mehr existiert
+        if (!ownedChars.includes(selectedValue) && ownedChars.length > 0) {
+             charSelect.value = ownedChars[0];
+        }
+    }
+}
+
+// 4. KLICK-HANDLER FÜR BUTTONS
+
+function handleFightClick() {
+    const selectedChar = document.getElementById('char-select').value;
+    if (selectedChar === "Keine Kämpfer verfügbar!" || !selectedChar) {
+        document.getElementById('game-messages').innerHTML = "Du musst erst ein Pack öffnen und einen Kämpfer auswählen!";
+        return;
+    }
+    const result = startFight(selectedChar);
+    document.getElementById('game-messages').innerHTML = result;
+    updateUI();
+}
+
+function handlePackClick() {
+    const result = openPack();
+    document.getElementById('game-messages').innerHTML = result;
+    updateUI();
+}
+
+// Initialer Aufruf, wenn die Seite geladen wird
+window.onload = updateUI;
+
+// --- ENDE DES JAVASCRIPT CODES ---
+</script>

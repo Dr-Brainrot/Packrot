@@ -264,17 +264,12 @@ const IMAGE_MAP = {
 };
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
-// NEU: Collection ist jetzt ein Array von Kartenobjekten
-let collection = JSON.parse(localStorage.getItem('brainrotCollection')) || [
-    { id: 1, name: "Luca", level: 1, xp: 0 },
-    { id: 2, name: "Franco", level: 1, xp: 0 },
-    { id: 3, name: "Pino", level: 1, xp: 0 }
-];
-let coins = parseInt(localStorage.getItem('brainrotCoins')) || 0; 
-let nextCardId = parseInt(localStorage.getItem('brainrotNextCardId')) || 4; // Zähler für neue Karten-IDs
+let collection = [];
+let coins = 0; 
+let nextCardId = 1; 
 
 let isBattling = false;     
-let selectedCard = null;  // Beinhaltet jetzt das volle Kartenobjekt aus der collection
+let selectedCard = null;  
 let opponentCard = null;  
 
 // Synth-State
@@ -294,6 +289,71 @@ const XP_PER_WIN = 30;    // XP erhalten pro gewonnenem Kampf
 // Hilfsfunktion für die rundenbasierte Logik (Delay)
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+function showDamagePopup(elementId, damage, isCrit) {
+    const fighterPanel = document.getElementById(elementId);
+    const popup = document.createElement('div');
+    popup.textContent = `-${damage}`;
+    popup.classList.add('damage-popup');
+    if (isCrit) {
+        popup.classList.add('crit');
+        popup.textContent = `💥 -${damage}!`;
+    }
+    
+    const randomX = Math.random() * 20 - 10; 
+    popup.style.transform = `translate(calc(-50% + ${randomX}px), 0)`;
+
+    fighterPanel.appendChild(popup);
+    
+    setTimeout(() => {
+        if (fighterPanel.contains(popup)) {
+            fighterPanel.removeChild(popup);
+        }
+    }, 1000);
+}
+
+function updateHPBar(hpFillId, currentHP) {
+    const hpFill = document.getElementById(hpFillId);
+    const percentage = Math.max(0, currentHP);
+    hpFill.style.width = `${percentage}%`;
+    
+    if (percentage <= 25) {
+        hpFill.classList.add('low-hp');
+    } else {
+        hpFill.classList.remove('low-hp');
+    }
+}
+
+function animateAttack(attackerElementId, defenderElementId) {
+    return new Promise(resolve => {
+        const attacker = document.getElementById(attackerElementId);
+        const defender = document.getElementById(defenderElementId);
+        
+        attacker.classList.add(`attacking-${attackerElementId.split('-')[0]}`);
+        defender.classList.add('hit'); 
+        
+        function handleAnimationEnd() {
+            attacker.classList.remove(`attacking-${attackerElementId.split('-')[0]}`);
+            defender.classList.remove('hit');
+            attacker.removeEventListener('animationend', handleAnimationEnd);
+            resolve();
+        }
+        
+        attacker.addEventListener('animationend', handleAnimationEnd);
+    });
+}
+
+function calculateStrength(charData) {
+    // Wenn charData das volle Objekt mit ATK/LUCK ist (Gegner-Karte)
+    const atk = charData.atk;
+    const luck = charData.luck;
+    
+    const luckRoll = Math.floor(Math.random() * 100) + 1;
+    let bonus = 0;
+    if (luckRoll <= luck) {
+        bonus = (atk * 0.33);
+    }
+    return atk + bonus;
+}
 
 // NEUE FUNKTION: Basiswerte der Karte abrufen
 function getCharacterBaseStats(name) {
@@ -305,7 +365,6 @@ function getCharacterCurrentStats(card) {
     const baseStats = getCharacterBaseStats(card.name);
     if (!baseStats) return null;
 
-    // Berechnung des Bonus: Pro Level 5% der Basis-ATK und 2% der Basis-LUCK
     const levelBonus = card.level - 1;
     const atkBonus = Math.round(baseStats.atk * 0.05 * levelBonus);
     const luckBonus = Math.round(baseStats.luck * 0.02 * levelBonus);
@@ -313,7 +372,7 @@ function getCharacterCurrentStats(card) {
     return {
         name: card.name,
         atk: baseStats.atk + atkBonus,
-        luck: Math.min(100, baseStats.luck + luckBonus), // Luck max. 100
+        luck: Math.min(100, baseStats.luck + luckBonus), 
         rarity: baseStats.rarity,
         level: card.level,
         xp: card.xp
@@ -328,8 +387,8 @@ function gainXP(cardId, xp) {
     card.xp += xp;
     
     let leveledUp = false;
-    while (card.xp >= XP_PER_LEVEL * card.level && card.level < 10) { // Max Level 10
-        card.xp -= XP_PER_LEVEL * card.level; // XP für das aktuelle Level abziehen
+    while (card.xp >= XP_PER_LEVEL * card.level && card.level < 10) { 
+        card.xp -= XP_PER_LEVEL * card.level; 
         card.level += 1;
         leveledUp = true;
     }
@@ -353,30 +412,27 @@ function synthCharacter(mainCardId, sacrificeCardId) {
     if (mainCard.name !== collection[sacrificeCardIndex].name) {
         return "FEHLER: Karten müssen vom gleichen Charakter sein.";
     }
+    if (mainCard.id === collection[sacrificeCardIndex].id) {
+         return "FEHLER: Haupt- und Opferkarte müssen unterschiedlich sein.";
+    }
     if (mainCard.level >= 10) {
          return "FEHLER: Diese Karte hat bereits das maximale Level (10) erreicht.";
     }
 
-    // Die Opferkarte gibt XP basierend auf ihrer Seltenheit (vereinfacht)
-    // Gewöhnlich: 50 XP, Ungewöhnlich: 100 XP, Selten: 150 XP, Episch: 200 XP, Legendär: 300 XP
     const rarity = getCharacterBaseStats(mainCard.name).rarity;
-    let baseXP = 50;
-    if (rarity === "Ungewöhnlich") baseXP = 100;
-    else if (rarity === "Selten") baseXP = 150;
-    else if (rarity === "Episch") baseXP = 200;
-    else if (rarity === "Legendär") baseXP = 300;
+    let xpGained = 50;
+    if (rarity === "Ungewöhnlich") xpGained = 100;
+    else if (rarity === "Selten") xpGained = 150;
+    else if (rarity === "Episch") xpGained = 200;
+    else if (rarity === "Legendär") xpGained = 300;
     
-    const xpGained = baseXP;
-
     // 1. Opferkarte aus der Sammlung entfernen
     collection.splice(sacrificeCardIndex, 1);
     
     // 2. Hauptkarte erhält XP (prüft auf Level-Up)
-    const oldLevel = mainCard.level;
+    let levelUps = 0;
     mainCard.xp += xpGained;
 
-    // Level-Up-Logik prüfen
-    let levelUps = 0;
     while (mainCard.xp >= XP_PER_LEVEL * mainCard.level && mainCard.level < 10) { 
         mainCard.xp -= XP_PER_LEVEL * mainCard.level; 
         mainCard.level += 1;
@@ -410,9 +466,8 @@ function drawCard() {
     return newCard;
 }
 
-// === ASYNCHRONE BATTLE-FUNKTION (Aktualisiert für Level-System) ===
+// === ASYNCHRONE BATTLE-FUNKTION ===
 async function battle() {
-    // SelectedCard ist nun das Kartenobjekt aus der Collection
     if (isBattling || !selectedCard || !opponentCard) return;
 
     isBattling = true; 
@@ -423,7 +478,6 @@ async function battle() {
     document.getElementById('start-battle-button').disabled = true;
     document.getElementById('open-pack-button').disabled = true;
 
-    // Aktuelle Kampf-Werte des Spielers basierend auf Level
     const playerStats = getCharacterCurrentStats(selectedCard);
     
     // KAMPF VISUALISIERUNG START
@@ -450,7 +504,7 @@ async function battle() {
         
         await animateAttack('player-fighter', 'opponent-fighter');
         
-        let playerStrength = calculateStrength(playerStats); // Nutzt Level-Werte
+        let playerStrength = calculateStrength(playerStats);
         let playerDamage = Math.max(1, Math.round(playerStrength / 10)); 
         let isPlayerCrit = false;
         
@@ -510,7 +564,7 @@ async function battle() {
     let finalMessage = "";
     if (playerHP > 0) {
         coins += 1;
-        gainXP(selectedCard.id, XP_PER_WIN); // NEU: XP für den Spielercharakter
+        gainXP(selectedCard.id, XP_PER_WIN);
         finalMessage = `🏆 **SIEG!** Du hast gewonnen, 1 Coin und ${XP_PER_WIN} XP erhalten!`;
         document.getElementById('player-fighter').style.border = '3px solid #4CAF50';
         document.getElementById('opponent-fighter').style.border = '3px solid #F44336';
@@ -524,7 +578,6 @@ async function battle() {
     saveGame();
     updateUI(); 
 }
-// === ENDE DER BATTLE-FUNKTION ===
 
 
 // --- Pack-Öffnung (mit neuer Datenstruktur) ---
@@ -542,8 +595,8 @@ async function openPack() {
     document.getElementById('start-battle-button').disabled = true;
 
     coins -= 3;
-    const newCard = drawCard(); // Die neue Karte ist jetzt ein Objekt {id, name, level, xp}
-    collection.push(newCard); // Füge das Objekt zur Collection hinzu
+    const newCard = drawCard();
+    collection.push(newCard); 
     
     saveGame(); 
     updateUI(); 
@@ -592,11 +645,44 @@ async function openPack() {
 }
 
 
-// 3. SPIELSTAND SPEICHERN (LOCAL STORAGE)
+// 3. SPIELSTAND SPEICHERN & LADEN
 function saveGame() {
     localStorage.setItem('brainrotCoins', coins);
     localStorage.setItem('brainrotCollection', JSON.stringify(collection));
     localStorage.setItem('brainrotNextCardId', nextCardId);
+}
+
+// NEU: Ladefunktion mit Startkarten-Check
+function loadGame() {
+    coins = parseInt(localStorage.getItem('brainrotCoins')) || 0;
+    nextCardId = parseInt(localStorage.getItem('brainrotNextCardId')) || 1;
+    
+    let loadedCollection;
+    try {
+        loadedCollection = JSON.parse(localStorage.getItem('brainrotCollection'));
+        // Sicherheitscheck: Überprüfen, ob die geladene Collection ein Array ist
+        if (!Array.isArray(loadedCollection)) {
+            loadedCollection = [];
+        }
+    } catch (e) {
+        loadedCollection = [];
+    }
+    
+    collection = loadedCollection;
+
+    // --- INITIALISIERUNGS-CHECK FÜR STARTKARTEN ---
+    if (collection.length === 0) {
+        // Füge die 3 Startkarten hinzu, falls die Sammlung leer ist (z.B. beim ersten Start oder nach einem Datenfehler)
+        collection.push({ id: nextCardId++, name: "Luca", level: 1, xp: 0 });
+        collection.push({ id: nextCardId++, name: "Franco", level: 1, xp: 0 });
+        collection.push({ id: nextCardId++, name: "Pino", level: 1, xp: 0 });
+        
+        // Füge Startmünzen hinzu, damit man sofort ein Pack öffnen kann
+        if (coins < 3) coins = 3; 
+
+        document.getElementById('game-messages').innerHTML = "Spiel neu initialisiert! Du hast deine Startkarten und 3 Münzen erhalten.";
+        saveGame();
+    }
 }
 
 
@@ -606,15 +692,14 @@ function updateUI() {
     // 1. Münzen aktualisieren
     document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
     
-    // 2. Sammlung aktualisieren (DEUTLICH KOMPLEXER JETZT)
+    // 2. Sammlung aktualisieren
     const collectionList = document.getElementById('collection-list');
     collectionList.innerHTML = ''; 
     
-    // Sortiere nach Name und Level
     const sortedCollection = [...collection].sort((a, b) => {
         if (a.name < b.name) return -1;
         if (a.name > b.name) return 1;
-        return b.level - a.level; // Innerhalb des Namens nach Level absteigend
+        return b.level - a.level; 
     });
 
     sortedCollection.forEach(card => {
@@ -637,7 +722,7 @@ function updateUI() {
         collectionList.appendChild(li);
     });
     
-    // 3. Auswahlfeld für den Kampf aktualisieren (Nur Karten Level 1+ wählen)
+    // 3. Auswahlfeld für den Kampf aktualisieren
     const charSelect = document.getElementById('char-select');
     const selectedId = charSelect.value;
     charSelect.innerHTML = '';
@@ -659,7 +744,8 @@ function updateUI() {
             }
             charSelect.appendChild(option);
         });
-        // Setze selectedCard auf das ausgewählte Objekt
+        
+        // Setze selectedCard auf das aktuell ausgewählte Objekt oder die erste Karte
         const currentSelectionId = parseInt(charSelect.value);
         selectedCard = collection.find(c => c.id === currentSelectionId) || selectableCards[0];
     }
@@ -686,8 +772,14 @@ function updateSynthUI() {
         } else if (mainCard.level >= 10) {
             status.textContent = "FEHLER: Hauptkarte hat Max-Level erreicht (10)!";
         } else {
-            const baseXP = getCharacterBaseStats(mainCard.name).rarity === "Legendär" ? 300 : 50; // Vereinfachte XP-Anzeige
-            status.textContent = `Bereit! ${mainCard.name} erhält ~${baseXP} XP.`;
+            const rarity = getCharacterBaseStats(mainCard.name).rarity;
+            let xpGained = 50;
+            if (rarity === "Ungewöhnlich") xpGained = 100;
+            else if (rarity === "Selten") xpGained = 150;
+            else if (rarity === "Episch") xpGained = 200;
+            else if (rarity === "Legendär") xpGained = 300;
+
+            status.textContent = `Bereit! ${mainCard.name} erhält ${xpGained} XP.`;
             canSynth = true;
         }
     } else {
@@ -727,7 +819,7 @@ async function handleFightClick() {
     
     // Gegner ist immer eine zufällige Basis-Karte (kein Level-System für Gegner)
     const opponentBase = drawCard();
-    opponentCard = getCharacterBaseStats(opponentBase.name);
+    opponentCard = getCharacterBaseStats(opponentBase.name); // Gegner kämpft mit Basis-Stats
 
     await battle(); 
     updateUI();
@@ -737,15 +829,10 @@ async function handlePackClick() {
     await openPack();
 }
 
-// Initialer Aufruf, wenn die Seite geladen wird
+// Initialer Aufruf
 window.onload = () => {
-    // Initialisiere selectedCard beim Laden, falls Karten existieren
-    const initialSelect = document.getElementById('char-select');
-    if (initialSelect.options.length > 0) {
-        const currentSelectionId = parseInt(initialSelect.value);
-        selectedCard = collection.find(c => c.id === currentSelectionId);
-    }
-    updateUI();
+    loadGame(); // Lädt den Spielstand ODER initialisiert die Startkarten
+    updateUI(); // Aktualisiert die UI mit den geladenen/initialisierten Daten
 };
 
 // --- ENDE DES JAVASCRIPT CODES ---

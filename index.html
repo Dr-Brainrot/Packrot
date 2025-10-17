@@ -175,29 +175,17 @@ const CHARACTER_POOL = [
 
 // --- BILDER DATENSTRUKTUR (KORRIGIERT NACH DEINEN NEUEN LOOKS) ---
 const IMAGE_MAP = {
-    // 1. Gert (Disco-Kopf mit Bart) -> 1760603658844.jpg (Disco-Wesen)
+    // Diese URLs wurden basierend auf deinen hochgeladenen Dateien erstellt
     "Gert": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603658844.jpg", 
-    // 2. Ciro (Adler im Anzug/Kampfflugzeug-Füße) -> 1760603775510.jpg (Adler im Anzug)
     "Ciro": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603775510.jpg",
-    // 3. Pino (Tannenzapfen mit Pizzabäcker-Ohr) -> 1760604336272.jpg (Mann im Schokobad - muss hier korrigiert werden, es wurde die folgende Zuordnung basierend auf der früheren besten Schätzung beibehalten, da die neuen Look-Bilder nicht erneut hochgeladen wurden)
-    // Wir nehmen hier den Mann im Schokobad, da Pino zuvor auf diesen gesetzt war, und die Bilder nicht neu sortiert werden konnten:
     "Pino": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604336272.jpg", 
-    // 4. Maria (Ballerina-Pinguin mit Pasta) -> 1760603976186.jpg (Pinguin-Ballerina)
     "Maria": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603976186.jpg",
-    // 5. Il Baffo (Massiver Schnurrbart) -> 1760603873171.jpg (Tannenzapfen-Mann mit Schnurrbart/Pizza)
     "Il Baffo": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603873171.jpg", 
-    // 6. La Nonna (Oma im Fiat 500 mit Kelle) -> 1760604469456.jpg (Oma im Fiat 500)
     "La Nonna": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604469456.jpg",
-    // 7. Luca (Mops mit Zwiebel-Kopf) -> 1760604194583.jpg (Weinender Zwiebel-Mops)
     "Luca": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604194583.jpg",
-    // 8. Giulia (Eidechse aus Gelati-Kugeln) -> 1760604449953.jpg (Eiscreme-Eidechse)
     "Giulia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604449953.jpg",
-    // 9. Franco (Badewanne auf haarigen Beinen) -> 1760604049720.jpg (Haarige Kugel mit Schnurrbart)
-    // Hier wurde das Bild von Franco (alt) auf das Badewannen-Bild gesetzt, um die korrekte ID zu behalten:
     "Franco": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604049720.jpg",
-    // 10. Silvia (Tintenfisch mit Gummihandschuhen) -> 1760604414423.jpg (Taucher-Krake mit vielen Handschuhen)
     "Silvia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604414423.jpg",
-    // Standard-Bild
     "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" 
 };
 
@@ -217,6 +205,7 @@ const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char =>
 // 2. SPIELLOGIK (Kernfunktionen)
 
 // Hilfsfunktion für die rundenbasierte Logik (Delay)
+// Diese Funktion ist entscheidend für das Warten im asynchronen Kampf
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 function calculateStrength(charData) {
@@ -235,7 +224,7 @@ function drawCard() {
     return DRAW_WEIGHTS[randomIndex];
 }
 
-// === NEUE, ASYNCHRONE BATTLE-FUNKTION (LIVE-KAMPF-STRUKTUR) ===
+// === ASYNCHRONE BATTLE-FUNKTION (LIVE-KAMPF-STRUKTUR) ===
 async function battle() {
     // Sicherstellen, dass der Kampf nicht läuft und Karten gewählt sind
     if (isBattling || !selectedCard || !opponentCard) return;
@@ -412,7 +401,8 @@ function updateUI() {
 
 // 5. KLICK-HANDLER FÜR BUTTONS
 
-function handleFightClick() {
+// Korrigierte Funktion: 'async' hinzugefügt, damit 'await battle()' funktioniert.
+async function handleFightClick() {
     const selectedCharName = document.getElementById('char-select').value;
     
     if (selectedCharName === "Keine Kämpfer verfügbar!" || !selectedCharName) {
@@ -424,8 +414,8 @@ function handleFightClick() {
     selectedCard = CHARACTER_POOL.find(c => c.name === selectedCharName);
     opponentCard = drawCard(); // Die Gegnerkarte wird hier einmal gezogen
 
-    // Löse den asynchronen Kampf aus
-    battle();
+    // Löse den asynchronen Kampf aus und WARTE darauf
+    await battle(); // <- FEHLTE
     updateUI();
 }
 

@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Italian Brainrot TCG: La Sfida</title>
+    
+    <style>
+/* --- CSS für das Design --- */
+body {
+    background-color: #f0f2f5; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+.brainrot-game {
+    padding: 25px;
+    max-width: 750px; 
+    width: 90%; 
+    margin: 20px auto;
+    border: 3px solid #d32f2f; 
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+    position: relative; 
+    overflow: hidden; 
+}
+.brainrot-game h2 {
+    color: #d32f2f;
+    text-align: center;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+.coin-display {
+    font-size: 26px;
+    font-weight: bold;
+    color: #ffc107; 
+    text-shadow: 1px 1px 1px #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.fight-button, .pack-button, .synth-button {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.fight-button {
+    background-color: #d32f2f; 
+    color: white;
+}
+.fight-button:hover {
+    background-color: #c62828;
+}
+.pack-button {
+    background-color: #1976d2; 
+    color: white;
+}
+.pack-button:hover {
+    background-color: #1565c0;
+}
+.synth-button {
+    background-color: #FF9800;
+    color: white;
+}
+.synth-button:hover {
+    background-color: #FB8C00;
+}
+
+/* Button zittern bei Fehler */
+@keyframes shake-animation {
+    0%, 100% { transform: translateX(0); background-color: #1976d2; }
+    20%, 60% { transform: translateX(-5px); background-color: #FF5722; }
+    40%, 80% { transform: translateX(5px); background-color: #FF5722; }
+}
+.shake-button {
+    animation: shake-animation 0.4s ease-in-out;
+}
+
+#char-select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 15px;
+}
+#game-messages {
+    padding: 15px;
+    background-color: #e0f7fa;
+    border: 1px solid #b2ebf2;
+    border-radius: 4px;
+    margin-top: 15px;
+    min-height: 50px;
+    white-space: pre-wrap;
+}
+
+/* --- KAMPF VISUALISIERUNG --- */
+.fight-container { 
+    display: flex; 
+    justify-content: space-around; 
+    align-items: flex-start; 
+    margin: 20px 0; 
+    text-align: center; 
+}
+.fighter-panel { 
+    width: 45%; 
+    background-color: #eee; 
+    padding: 10px; 
+    border-radius: 8px; 
+    min-height: 250px; 
+    position: relative; 
+    transition: all 0.3s; 
+}
+
+/* HP BAR ETC. */
+.char-img { width: 100%; max-width: 120px; height: auto; border: 3px solid #333; border-radius: 4px; margin-bottom: 5px; }
+.vs-text { font-size: 24px; font-weight: bold; color: #d32f2f; line-height: 150px; }
+.fighter-stats-info { font-weight: bold; min-height: 30px; margin: 5px 0 0 0; }
+.stats-text { margin-top: 5px; }
+.hp-bar-container { width: 100%; height: 15px; background-color: #f44336; border-radius: 7px; margin-top: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; background-color: #4CAF50; transition: width 0.5s ease-out; }
+.low-hp { background-color: #f44336; }
+.damage-popup { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); color: red; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 3px black; opacity: 0; animation: floatup 1s forwards; pointer-events: none; }
+.damage-popup.crit { color: #ffc107; font-size: 30px; }
+@keyframes floatup { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
+
+/* KAMPF ANIMATIONEN */
+@keyframes attack-right { 0% { transform: translateX(0); } 50% { transform: translateX(15px) scale(1.05); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); } 100% { transform: translateX(0); } }
+@keyframes attack-left { 0% { transform: translateX(0); } 50% { transform: translateX(-15px) scale(1.05); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); } 100% { transform: translateX(0); } }
+@keyframes hit-effect { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); background-color: #ffcccc; } }
+.fighter-panel.attacking-player { animation: attack-right 0.3s ease-in-out; }
+.fighter-panel.attacking-opponent { animation: attack-left 0.3s ease-in-out; }
+.fighter-panel.hit { animation: hit-effect 0.3s ease-in-out; }
+
+/* AKTIONSMENÜ */
+#battle-actions {
+    display: none; 
+    justify-content: space-around;
+    padding: 10px;
+    margin-top: 15px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+#battle-actions button {
+    padding: 3px 2px; 
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, opacity 0.2s;
+    width: 31%;
+    text-align: center;
+    font-size: 11px; 
+    height: 85px; 
+    position: relative;
+    box-sizing: border-box;
+    line-height: 1.1; 
+}
+#battle-actions button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+#battle-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #d8d8d8 !important;
+    color: #555 !important;
+}
+
+/* Cooldown Anzeige */
+.cooldown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+/* Button Farbklassen */
+.action-base { background-color: #1976d2; color: white; }
+.action-special1 { background-color: #FF5722; color: white; }
+.action-special2 { background-color: #4CAF50; color: white; }
+
+/* --- Sammlung und Synth CSS --- */
+#collection-list { padding-left: 0; }
+.card-list-item { list-style-type: none; padding: 5px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; }
+.card-list-item strong { flex-grow: 1; }
+.card-list-item button { margin-left: 10px; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.select-main { background-color: #4CAF50; color: white; }
+.select-sacrifice { background-color: #F44336; color: white; }
+
+/* --- PACK-ÖFFNUNGS-ANIMATION --- */
+#pack-opening-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out; }
+#pack-opening-overlay.active { opacity: 1; visibility: visible; }
+.card-reveal-container { perspective: 1000px; width: 180px; height: 250px; position: relative; cursor: pointer; }
+.card-front, .card-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 8px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); transition: transform 0.8s ease-in-out; background-size: cover; background-position: center; }
+.card-front { background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png'); transform: rotateY(0deg); }
+.card-back { background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg'); transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; color: white; text-shadow: 1px 1px 3px black; padding: 10px; box-sizing: border-box; font-size: 14px; text-align: center; font-weight: bold; }
+.card-reveal-container.revealed .card-front { transform: rotateY(-180deg); }
+.card-reveal-container.revealed .card-back { transform: rotateY(0deg); }
+#revealed-card-info { position: absolute; bottom: 10px; width: 100%; text-align: center; padding: 0 5px; box-sizing: border-box; background-color: rgba(0,0,0,0.4); border-radius: 0 0 8px 8px; padding-top: 5px; padding-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="brainrot-game">
+    <h2>Italian Brainrot TCG: La Sfida 🤌</h2>
+    
+    <div id="coin-display" class="coin-display">Münzen: 0</div>
+    
+    <h3>Wähle deinen Kämpfer:</h3>
+    <select id="char-select"></select>
+    
+    <button class="fight-button" id="start-battle-button" onclick="handleFightClick()">⚔️ Starte Kampf</button>
+    <button class="pack-button" id="open-pack-button" onclick="handlePackClick()">🎁 Pack öffnen (3 Münzen)</button>
+    
+    <hr>
+
+    <h3>Letzter Kampf:</h3>
+    <div id="fight-visuals" class="fight-container">
+        <div class="fighter-panel" id="player-fighter">
+            <img id="player-img" src="https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" alt="Dein Kämpfer" class="char-img">
+            <div class="fighter-stats-info">
+                <p id="player-stats" class="stats-text">Wähle deinen Kämpfer</p>
+                <div class="hp-bar-container">
+                    <div id="player-hp-fill" class="hp-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+        <div class="vs-text">VS</div>
+        <div class="fighter-panel" id="opponent-fighter">
+             <img id="opponent-img" src="https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" alt="Gegner" class="char-img">
+            <div class="fighter-stats-info">
+                <p id="opponent-stats" class="stats-text">Gegner wartet</p>
+                <div class="hp-bar-container">
+                    <div id="opponent-hp-fill" class="hp-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="battle-actions">
+        </div>
+
+    <h3>Nachrichten:</h3>
+    <div id="game-messages">Willkommen in Italien! Wähle deinen Brainrot!</div>
+    
+    <hr>
+    
+    <h3>Fusions-System (Synth)</h3>
+    <p>Wähle eine **Hauptkarte** (grün) und eine **Opferkarte** (rot) des gleichen Charakters aus der Sammlung, um die Hauptkarte zu leveln.</p>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <span id="synth-status">Bereit zum Synthetisieren.</span>
+    </div>
+    <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+        <span id="synth-main-card">Hauptkarte: Keine</span>
+        <span id="synth-sacrifice-card">Opferkarte: Keine</span>
+    </div>
+    <button class="synth-button" id="start-synth-button" onclick="handleSynthClick()" disabled>🔥 Jetzt fusionieren!</button>
+
+    <hr>
+    
+    <h3>Deine Sammlung:</h3>
+    <ul id="collection-list"></ul>
+
+    
+    <div id="pack-opening-overlay">
+        <div class="card-reveal-container" id="card-reveal-container">
+            <div class="card-front"></div>
+            <div class="card-back" id="revealed-card-image">
+                <div id="revealed-card-info"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- START DES JAVASCRIPT CODES ---
+
+// 1. SPIELDATEN
+// NEU: Fähigkeits-Datenstruktur mit GEKÜRZTEN Beschreibungen
+const CHARACTER_POOL = [
+    { name: "Gert", atk: 50, luck: 70, rarity: "Legendär", weight: 2, abilities: {
+        'base': { name: "Mano-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Doppelter Wetteinsatz", desc: "Basis + Chance auf Doppelangriff in nä. Runde (CD: 2)", effect: 'doubleNextTurn', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Barriere di Nonna", desc: "Leicht reduzierter Schaden & 40% Schild nä. Zug (CD: 3)", effect: 'shield40', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Ciro", atk: 80, luck: 30, rarity: "Episch", weight: 5, abilities: {
+        'base': { name: "Basis-Streich", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Aggressivo", desc: "Hoher Schaden, aber eigene DEF in nä. Runde ignoriert (CD: 3)", effect: 'highDamageLowDefense', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Zorniger Wurf", desc: "50% Chance auf 2x Schaden, 50% Chance auf 0 Schaden (CD: 2)", effect: 'riskDoubleDamage', cooldown: 2, color: "action-special2" }
+    }},
+    { name: "Pino", atk: 65, luck: 55, rarity: "Selten", weight: 10, abilities: {
+        'base': { name: "Normaler Schlag", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Starker Kopfstoß", desc: "+25% Schaden (CD: 2)", effect: 'damage25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Widerspenstiger Tritt", desc: "Basis-Schaden + 50% Chance auf Betäubung Gegner (CD: 3)", effect: 'stun', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Maria", atk: 40, luck: 80, rarity: "Selten", weight: 10, abilities: {
+        'base': { name: "Italienischer Witz", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Glücksverdopplung", desc: "+50% LUCK für diesen Zug (CD: 3)", effect: 'luck50', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Kaffee-Pause", desc: "Heilt 25 HP. Kein Angriffsschaden (CD: 4)", effect: 'heal25', cooldown: 4, color: "action-special2" }
+    }},
+    { name: "Luca", atk: 50, luck: 60, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Stoß", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Schnelle Wunde", desc: "+15% Schaden (CD: 1)", effect: 'damage15', cooldown: 1, color: "action-special1" },
+        'special2': { name: "Spaghetti-Reparatur", desc: "Heilt 15 HP (CD: 3)", effect: 'heal15', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Giulia", atk: 45, luck: 65, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Fächer-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Abwehr-Fächer", desc: "Reduziert nächsten Schaden um 25% (CD: 2)", effect: 'shield25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Schneller Stich", desc: "Zwei Angriffe mit halbem Schaden (CD: 4)", effect: 'doubleHit', cooldown: 4, color: "action-special2" }
+    }},
+    { name: "Il Baffo", atk: 75, luck: 45, rarity: "Ungewöhnlich", weight: 15, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Wut", desc: "+20% Schaden, aber 10 HP Selbstschaden (CD: 2)", effect: 'damage20Self10', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Einschüchterung", desc: "50% Chance auf halben Gegner-Schaden nä. Runde (CD: 3)", effect: 'opponentDamageDown', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "La Nonna", atk: 35, luck: 90, rarity: "Ungewöhnlich", weight: 15, abilities: {
+        'base': { name: "Basis-Klaps", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Trost", desc: "Heilt 20 HP. Kein Schaden (CD: 2)", effect: 'heal20', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Guacamole", desc: "50% Chance auf Schaden über Zeit (2 Runden) (CD: 4)", effect: 'poison2', cooldown: 4, color: "action-special2" }
+    }},
+    { name: "Franco", atk: 60, luck: 50, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Kompakt-Angriff", desc: "+15% Schaden (CD: 2)", effect: 'damage15', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Adrenalin", desc: "+30% ATK im nächsten Zug (CD: 3)", effect: 'atkBoost30', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Taktischer Rückzug", desc: "50% Schaden, 50% Chance auf 0 eingehenden Schaden (CD: 2)", effect: 'avoid50', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Fokus", desc: "LUCK permanent um 5 erhöht (CD: 5)", effect: 'luckPerm5', cooldown: 5, color: "action-special2" }
+    }},
+];
+
+// --- BILDER DATENSTRUKTUR ---
+const IMAGE_MAP = {
+    "Gert": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603658844.jpg", 
+    "Ciro": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603775510.jpg",
+    "Pino": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604336272.jpg", 
+    "Maria": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603976186.jpg",
+    "Il Baffo": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603873171.jpg", 
+    "La Nonna": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604469456.jpg",
+    "Luca": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604194583.jpg",
+    "Giulia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604449953.jpg",
+    "Franco": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604049720.jpg",
+    "Silvia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604414423.jpg",
+    "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg",
+    "CardBack": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png" 
+};
+
+// --- GLOBALE ZUSTANDSVARIABLEN ---
+let collection = [];
+let coins = 0; 
+let nextCardId = 1; 
+
+let isBattling = false;     
+let selectedCard = null; // Dient nur der UI-Anzeige/Selektion außerhalb des Kampfes 
+let opponentCard = null;  
+
+// Kampf-Zustand
+let playerHP = 100; 
+let opponentHP = 100; 
+let playerActionPromiseResolve = null; 
+let synthMainCardId = null;
+let synthSacrificeCardId = null;
+
+// Spieler: Cooldowns und temporäre Status-Effekte
+let playerCooldowns = { special1: 0, special2: 0 };
+let playerDefenseBoost = 1; 
+let playerDamageBoost = 1; 
+let playerNextTurnDamageBoost = 1; 
+let playerTempLuckBoost = 0; 
+let opponentNextTurnMiss = false; 
+let opponentDamageOverTime = 0;
+
+// Gegner: Cooldowns und temporäre Status-Effekte
+let opponentCooldowns = { special1: 0, special2: 0 };
+let opponentDefenseBoost = 1; 
+let opponentDamageBoost = 1; 
+let opponentNextTurnDamageBoost = 1;
+let opponentTempLuckBoost = 0; 
+let playerNextTurnMiss = false; 
+let playerDamageOverTime = 0; 
+
+
+const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char => 
+    Array(char.weight).fill(char)
+);
+const XP_PER_LEVEL = 100; 
+const XP_PER_WIN = 30;    
+
+
+// 2. SPIELLOGIK (Kernfunktionen)
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+function showDamagePopup(elementId, damage, isCrit, isHeal = false) {
+    const fighterPanel = document.getElementById(elementId);
+    const popup = document.createElement('div');
+    
+    if (isHeal) {
+        popup.textContent = `+${damage}`;
+        popup.style.color = '#4CAF50'; 
+        popup.style.fontSize = '26px';
+    } else {
+        popup.textContent = `-${damage}`;
+        popup.style.color = 'red';
+        if (isCrit) {
+            popup.classList.add('crit');
+            popup.textContent = `💥 -${damage}!`;
+        }
+    }
+    
+    popup.classList.add('damage-popup');
+    const randomX = Math.random() * 20 - 10; 
+    popup.style.transform = `translate(calc(-50% + ${randomX}px), 0)`;
+
+    fighterPanel.appendChild(popup);
+    
+    setTimeout(() => {
+        if (fighterPanel.contains(popup)) {
+            fighterPanel.removeChild(popup);
+        }
+    }, 1000);
+}
+
+function updateHPBar(hpFillId, currentHP) {
+    const hpFill = document.getElementById(hpFillId);
+    const percentage = Math.max(0, currentHP);
+    hpFill.style.width = `${percentage}%`;
+    
+    if (percentage <= 25) {
+        hpFill.classList.add('low-hp');
+    } else {
+        hpFill.classList.remove('low-hp');
+    }
+}
+
+function animateAttack(attackerElementId, defenderElementId) {
+    return new Promise(resolve => {
+        const attacker = document.getElementById(attackerElementId);
+        const defender = document.getElementById(defenderElementId);
+        const attackClass = `attacking-${attackerElementId.split('-')[0]}`;
+        
+        const timeout = setTimeout(() => {
+            attacker.classList.remove(attackClass);
+            defender.classList.remove('hit');
+            resolve();
+        }, 350); 
+        
+        function handleAnimationEnd() {
+            clearTimeout(timeout);
+            attacker.classList.remove(attackClass);
+            defender.classList.remove('hit');
+            attacker.removeEventListener('animationend', handleAnimationEnd);
+            resolve();
+        }
+        
+        attacker.addEventListener('animationend', handleAnimationEnd, { once: true });
+        
+        attacker.classList.add(attackClass);
+        defender.classList.add('hit'); 
+    });
+}
+
+function calculateStrength(charData, tempLuck = 0) {
+    const atk = charData.atk;
+    const luck = charData.luck + tempLuck; 
+    
+    const luckRoll = Math.floor(Math.random() * 100) + 1;
+    let bonus = 0;
+    let isCrit = false;
+    if (luckRoll <= luck) {
+        bonus = (atk * 0.33); 
+        isCrit = true;
+    }
+    return { strength: atk + bonus, isCrit: isCrit };
+}
+
+function getCharacterBaseStats(name) {
+    return CHARACTER_POOL.find(c => c.name === name);
+}
+
+function getCharacterCurrentStats(card) {
+    const baseStats = getCharacterBaseStats(card.name);
+    if (!baseStats) return null;
+
+    const levelBonus = card.level - 1;
+    const atkBonus = Math.round(baseStats.atk * 0.05 * levelBonus);
+    const luckBonus = Math.round(baseStats.luck * 0.02 * levelBonus);
+    
+    return {
+        name: card.name,
+        atk: baseStats.atk + atkBonus,
+        luck: Math.min(100, baseStats.luck + luckBonus), 
+        rarity: baseStats.rarity,
+        level: card.level,
+        xp: card.xp,
+        abilities: baseStats.abilities 
+    };
+}
+
+function gainXP(cardId, xp) {
+    const card = collection.find(c => c.id === cardId);
+    if (!card) return;
+
+    card.xp += xp;
+    
+    let leveledUp = false;
+    while (card.xp >= XP_PER_LEVEL * card.level && card.level < 10) { 
+        card.xp -= XP_PER_LEVEL * card.level; 
+        card.level += 1;
+        leveledUp = true;
+    }
+    
+    if (leveledUp) {
+        document.getElementById('game-messages').innerHTML += `<br>🎉 **${card.name}** ist auf Level **${card.level}** aufgestiegen!`;
+        const newStats = getCharacterCurrentStats(card);
+        document.getElementById('game-messages').innerHTML += `<br>Neue ATK: ${newStats.atk}, Neue LUCK: ${newStats.luck}%`;
+    }
+    saveGame();
+}
+
+function synthCharacter(mainCardId, sacrificeCardId) {
+    const mainCard = collection.find(c => c.id === mainCardId);
+    const sacrificeCardIndex = collection.findIndex(c => c.id === sacrificeCardId);
+
+    if (!mainCard || sacrificeCardIndex === -1) {
+        return "FEHLER: Karten nicht gefunden.";
+    }
+    if (mainCard.name !== collection[sacrificeCardIndex].name) {
+        return "FEHLER: Karten müssen vom gleichen Charakter sein.";
+    }
+    if (mainCard.id === collection[sacrificeCardIndex].id) {
+         return "FEHLER: Haupt- und Opferkarte müssen unterschiedlich sein.";
+    }
+    if (mainCard.level >= 10) {
+         return "FEHLER: Diese Karte hat bereits das maximale Level (10) erreicht.";
+    }
+
+    const rarity = getCharacterBaseStats(mainCard.name).rarity;
+    let xpGained = 50;
+    if (rarity === "Ungewöhnlich") xpGained = 100;
+    else if (rarity === "Selten") xpGained = 150;
+    else if (rarity === "Episch") xpGained = 200;
+    else if (rarity === "Legendär") xpGained = 300;
+    
+    collection.splice(sacrificeCardIndex, 1);
+    
+    let levelUps = 0;
+    mainCard.xp += xpGained;
+
+    while (mainCard.xp >= XP_PER_LEVEL * mainCard.level && mainCard.level < 10) { 
+        mainCard.xp -= XP_PER_LEVEL * mainCard.level; 
+        mainCard.level += 1;
+        levelUps++;
+    }
+    
+    synthMainCardId = null;
+    synthSacrificeCardId = null;
+    saveGame();
+
+    const newStats = getCharacterCurrentStats(mainCard);
+    
+    let message = `🔥 **${mainCard.name}** fusioniert! Erhielt ${xpGained} XP. (XP: ${mainCard.xp}/${XP_PER_LEVEL * mainCard.level})`;
+    if (levelUps > 0) {
+        message += `<br>🎉 AUFSTIEG auf Level **${mainCard.level}**! Neue ATK: ${newStats.atk}, LUCK: ${newStats.luck}%`;
+    }
+    return message;
+}
+
+function drawCard() {
+    const baseCard = DRAW_WEIGHTS[Math.floor(Math.random() * DRAW_WEIGHTS.length)];
+    const newCard = {
+        id: nextCardId++,
+        name: baseCard.name,
+        level: 1,
+        xp: 0
+    };
+    return newCard;
+}
+
+// Generiert und zeigt die Aktionsbuttons an
+function showActionButtons(playerStats) {
+    const actionContainer = document.getElementById('battle-actions');
+    actionContainer.innerHTML = '';
+    
+    const actions = playerStats.abilities;
+
+    ['base', 'special1', 'special2'].forEach(key => {
+        const ability = actions[key];
+        const button = document.createElement('button');
+        button.className = ability.color;
+        button.setAttribute('data-action', key);
+        
+        let cooldownText = '';
+        let isDisabled = false;
+
+        // Nur für Spezialfähigkeiten Cooldown prüfen
+        if (key !== 'base') {
+            if (playerCooldowns[key] > 0) {
+                cooldownText = `<div class="cooldown-overlay">${playerCooldowns[key]}</div>`;
+                isDisabled = true;
+            }
+        }
+        
+        button.innerHTML = `
+            <strong>${ability.name}</strong><br>
+            <span style="font-size: 10px;">${ability.desc}</span>
+            ${cooldownText}
+        `;
+        button.disabled = isDisabled;
+        button.onclick = () => selectAction(key);
+        
+        actionContainer.appendChild(button);
+    });
+    
+    actionContainer.style.display = 'flex';
+}
+
+// WICHTIGE FUNKTION: waitForPlayerAction
+function waitForPlayerAction(playerStats) {
+    // Stellt sicher, dass das Promise neu erstellt wird und resolve gesetzt wird
+    return new Promise(resolve => {
+        playerActionPromiseResolve = resolve;
+        showActionButtons(playerStats);
+    });
+}
+
+// WICHTIGE FUNKTION: selectAction
+function selectAction(actionKey) {
+    // Prüft, ob der Resolve-Handler gesetzt ist (also der Kampf auf die Aktion wartet)
+    if (playerActionPromiseResolve) {
+        // Cooldown für Spezialfähigkeiten setzen
+        if (actionKey !== 'base') {
+            const playerCardStats = getCharacterCurrentStats(selectedCard); // Nutzt selectedCard für die Fähigkeitsdaten
+            const ability = playerCardStats.abilities[actionKey];
+            
+            // Setzt Cooldown NUR, wenn er > 0 ist, was er für Specials immer sein sollte
+            if (ability && ability.cooldown > 0) {
+                playerCooldowns[actionKey] = ability.cooldown;
+            }
+        }
+        
+        // Versteckt das Aktionsmenü SOFORT
+        document.getElementById('battle-actions').style.display = 'none';
+
+        // Löst das Promise auf und setzt den Kampf fort
+        const resolve = playerActionPromiseResolve;
+        playerActionPromiseResolve = null; // Zurücksetzen, um weitere Klicks zu verhindern
+        resolve(actionKey); 
+    }
+}
+
+// Einfache KI-Logik für den Gegner
+function getOpponentAction(opponentStats, currentOpponentHP, currentPlayerHP) {
+    // 1. Prüfen, ob eine Heilung nötig ist (wenn HP unter 40%)
+    const healAbility = Object.keys(opponentStats.abilities).find(key => 
+        (opponentStats.abilities[key].effect && opponentStats.abilities[key].effect.startsWith('heal')) && opponentCooldowns[key] === 0
+    );
+    if (currentOpponentHP < 40 && healAbility) {
+        if (opponentStats.abilities[healAbility].cooldown > 0) {
+            opponentCooldowns[healAbility] = opponentStats.abilities[healAbility].cooldown;
+        }
+        return healAbility;
+    }
+    
+    // 2. Chance, eine Spezialfähigkeit zu nutzen (50% Chance)
+    if (Math.random() < 0.5) { 
+        // Wähle eine Spezialfähigkeit, die nicht auf Cooldown ist
+        const availableSpecials = ['special1', 'special2'].filter(key => 
+            opponentCooldowns[key] === 0
+        );
+        
+        if (availableSpecials.length > 0) {
+            // Wähle zufällig eine der verfügbaren Spezialfähigkeiten
+            const selectedKey = availableSpecials[Math.floor(Math.random() * availableSpecials.length)];
+            
+            // Setze Cooldown, bevor die Aktion zurückgegeben wird
+            if (opponentStats.abilities[selectedKey].cooldown > 0) {
+                opponentCooldowns[selectedKey] = opponentStats.abilities[selectedKey].cooldown;
+            }
+            return selectedKey;
+        }
+    }
+
+    // 3. Standardangriff, wenn keine Spezialfähigkeit verfügbar/gewählt
+    return 'base';
+}
+
+// KORRIGIERTE VERSION: applyOffensiveEffects
+// HILFSFUNKTION: Wendet Effekte an, wenn der Kämpfer angreift
+function applyOffensiveEffects(attackerCard, defenderCard, actionDetails, baseDamage, isCrit, isPlayer) {
+    const fighterName = attackerCard.name;
+    let message = "";
+    let damageMultiplier = 1;
+    let totalDamage = 0;
+    let hitCount = actionDetails.effect === 'doubleHit' ? 2 : 1;
+    
+    // Spieler- oder Gegner-Status-Update
+    const applyStatus = (effect, value) => {
+        if (isPlayer) {
+            // Spieler greift an (Buffs für sich, Debuffs für Gegner)
+            if (effect === 'damageBoost') playerNextTurnDamageBoost = value;
+            else if (effect === 'defenseBoost') playerDefenseBoost = value; // Eigener Def-Boost wirkt sofort
+            else if (effect === 'luckBoost') playerTempLuckBoost = value;
+            else if (effect === 'missOpponent') opponentNextTurnMiss = true;
+            else if (effect === 'poison') opponentDamageOverTime = value;
+            // Debuffs auf den Gegner (im Gegner-Zug) werden über opponentDefenseBoost geregelt
+            else if (effect === 'opponentDamageDown') opponentDefenseBoost = value; 
+        } else {
+            // Gegner greift an (Buffs für sich, Debuffs für Spieler)
+            if (effect === 'damageBoost') opponentNextTurnDamageBoost = value;
+            else if (effect === 'defenseBoost') opponentDefenseBoost = value; // Eigener Def-Boost wirkt sofort
+            else if (effect === 'luckBoost') opponentTempLuckBoost = value;
+            else if (effect === 'missOpponent') playerNextTurnMiss = true;
+            else if (effect === 'poison') playerDamageOverTime = value;
+            // Debuffs auf den Spieler (im Gegner-Zug) werden über playerDefenseBoost geregelt
+            else if (effect === 'opponentDamageDown') playerDefenseBoost = value; // <--- KORREKTUR: Muss playerDefenseBoost setzen!
+        }
+    };
+    
+    if (isCrit) {
+        baseDamage = Math.round(baseDamage * 1.5);
+        message += " ⭐ Glückstreffer!";
+    }
+
+    // VOR-ATTACKEN-EFFEKTE (Heilung, Glück)
+    if (actionDetails.effect && actionDetails.effect.startsWith('heal')) {
+        const healAmount = parseInt(actionDetails.effect.replace('heal', ''));
+        if (isPlayer) {
+            playerHP += healAmount;
+            playerHP = Math.min(100, playerHP);
+            showDamagePopup('player-fighter', healAmount, false, true);
+        } else {
+            opponentHP += healAmount;
+            opponentHP = Math.min(100, opponentHP);
+            showDamagePopup('opponent-fighter', healAmount, false, true);
+        }
+        message += ` **+${healAmount} HP** geheilt!`;
+        return { totalDamage: 0, message, isPlayerCrit: isCrit }; // Heilung macht 0 Schaden
+    }
+    
+    if (actionDetails.effect === 'luck50') {
+        applyStatus('luckBoost', 50);
+        message += ` **LUCK +50** für diesen Angriff!`;
+    }
+
+    // SCHADENSMODIFIKATOREN
+    if (actionDetails.effect === 'doubleNextTurn') {
+        applyStatus('damageBoost', 2);
+        damageMultiplier = 1.0; 
+        message += " (Bereitet Doppelangriff für nächste Runde vor)";
+    } else if (actionDetails.effect === 'shield40') {
+        // Spieler (Barriere di Nonna): Setzt eigenen DEF-Boost, der im Gegner-Zug zählt.
+        applyStatus('defenseBoost', 0.6); // 40% Reduktion (0.6 Multiplikator)
+        damageMultiplier = 0.7; // Spieler-Schaden um 30% reduziert
+        message += " (Bereitet 40% Schild für nächste Runde vor)";
+    } else if (actionDetails.effect === 'damage25') {
+        damageMultiplier = 1.25;
+    } else if (actionDetails.effect === 'damage15' || actionDetails.effect === 'kompakt') {
+        damageMultiplier = 1.15;
+    } else if (actionDetails.effect === 'highDamageLowDefense') {
+        damageMultiplier = 1.4; 
+        // Setzt EIGENEN DEF-Boost für nächste Runde auf 2.0 (doppelter eingehender Schaden)
+        applyStatus('defenseBoost', 2.0); 
+        message += " (Eigene Verteidigung in nä. Runde ignoriert)";
+    } else if (actionDetails.effect === 'riskDoubleDamage') {
+        if (Math.random() < 0.5) { 
+            damageMultiplier = 2; 
+            message += " 💥 SOFORT DOPPELT!";
+        } else {
+            damageMultiplier = 0; 
+            message += " 💧 KEIN SCHADEN verursacht!";
+        }
+    } else if (actionDetails.effect === 'avoid50') {
+        damageMultiplier = 0.5; 
+        if (Math.random() < 0.5) {
+            // Setzt EIGENEN DEF-Boost auf 0 (100% Ausweichen) für nächsten eingehenden Schaden
+            applyStatus('defenseBoost', 0); 
+            message += " 👻 Gegner-Angriff in diesem Zug zu 100% abgewehrt!";
+        }
+    } else if (actionDetails.effect === 'stun') {
+         if (Math.random() < 0.5) {
+            applyStatus('missOpponent', true);
+            message += " 😵 Gegner für nächsten Zug betäubt!";
+        }
+    } else if (actionDetails.effect === 'poison2') {
+        if (Math.random() < 0.5) {
+            applyStatus('poison', 2);
+            message += " 🤢 Gegner vergiftet (2 Runden)!";
+        }
+    } else if (actionDetails.effect === 'luckPerm5') {
+        // HINWEIS: Hier sollte attackerCard verwendet werden.
+        if (isPlayer) attackerCard.luck += 5; 
+        // Für den Gegner ändern wir die globale opponentCard, da diese die aktuellen Stats des Gegners hält.
+        else opponentCard.luck += 5; 
+        message += " ✨ LUCK permanent um 5 erhöht!";
+    } else if (actionDetails.effect === 'damage20Self10') {
+        damageMultiplier = 1.20;
+        const selfDamage = 10;
+        if (isPlayer) {
+            playerHP -= selfDamage;
+            playerHP = Math.max(0, playerHP);
+            showDamagePopup('player-fighter', selfDamage, false, false);
+        } else {
+            opponentHP -= selfDamage;
+            opponentHP = Math.max(0, opponentHP);
+            showDamagePopup('opponent-fighter', selfDamage, false, false);
+        }
+        message += ` (-${selfDamage} HP Selbstschaden erlitten)`;
+    } else if (actionDetails.effect === 'atkBoost30') {
+        applyStatus('damageBoost', 1.3);
+        message += " (ATK-Boost für nächsten Zug vorbereitet)";
+    } else if (actionDetails.effect === 'opponentDamageDown') {
+         if (Math.random() < 0.5) {
+            // Hier wird der Verteidiger-Boost des Gegners (wenn Spieler angreift) oder des Spielers (wenn Gegner angreift) manipuliert.
+            // Der Verteidiger soll seinen eingehenden Schaden halbieren.
+            if (isPlayer) {
+                applyStatus('opponentDamageDown', 0.5); // Manipuliert opponentDefenseBoost
+            } else {
+                applyStatus('opponentDamageDown', 0.5); // Manipuliert playerDefenseBoost
+            }
+            message += " 💨 Gegner-Schaden im nächsten Zug halbiert!";
+        }
+    }
+
+    // Schaden berechnen und anwenden (unter Berücksichtigung von Multi-Hits)
+    for (let i = 0; i < hitCount; i++) {
+        let currentHitDamage = Math.round(baseDamage * damageMultiplier);
+        if (actionDetails.effect === 'doubleHit') {
+            currentHitDamage = Math.round(currentHitDamage * 0.5); 
+            message += (i === 0 ? " [Hit 1]" : " [Hit 2]");
+        }
+        
+        if (currentHitDamage > 0) {
+            totalDamage += currentHitDamage;
+        }
+    }
+
+    return { totalDamage, message, isPlayerCrit: isCrit };
+}
+
+// Funktion zur Ausführung des Zuges eines Kämpfers
+async function executeTurn(attackerCard, defenderCard, actionKey, isPlayerTurn) {
+    const attackerName = attackerCard.name;
+    const defenderName = defenderCard.name;
+    const attackerElement = isPlayerTurn ? 'player-fighter' : 'opponent-fighter';
+    const defenderElement = isPlayerTurn ? 'opponent-fighter' : 'player-fighter';
+    
+    // ACHTUNG: Stats basieren auf dem übergebenen Kartenobjekt
+    const attackerStats = getCharacterCurrentStats(attackerCard);
+    const actionDetails = attackerStats.abilities[actionKey];
+    
+    let actionMessage = `${attackerName} wählt **${actionDetails.name}**!`;
+    
+    // Basisschaden (ohne Action-Boosts)
+    const currentAttack = attackerStats.atk * (isPlayerTurn ? playerDamageBoost : opponentDamageBoost);
+    const currentLuck = attackerStats.luck + (isPlayerTurn ? playerTempLuckBoost : opponentTempLuckBoost);
+    
+    const { strength: baseStrength, isCrit: critRoll } = calculateStrength({ atk: currentAttack, luck: currentLuck });
+    let baseDamage = Math.max(1, Math.round(baseStrength / 10));
+
+    // Spezialeffekte anwenden und Gesamtschaden berechnen
+    // HINWEIS: Wir übergeben attackerCard und defenderCard an applyOffensiveEffects
+    const result = applyOffensiveEffects(
+        attackerCard,
+        defenderCard, 
+        actionDetails, 
+        baseDamage, 
+        critRoll, 
+        isPlayerTurn
+    );
+
+    document.getElementById('game-messages').innerHTML += `<p>${actionMessage}${result.message}.`;
+    
+    await animateAttack(attackerElement, defenderElement);
+    await delay(500);
+
+    let damageDealt = result.totalDamage;
+    let finalDamageReceived = damageDealt;
+
+    if (damageDealt > 0) {
+        // SCHADENSREDUZIERUNG DURCH VERTEIDIGUNG (DEF)
+        // Wenn es der Spielerzug ist, wird die Defense des Gegners (opponentDefenseBoost) geprüft.
+        // Wenn es der Gegnerzug ist, wird die Defense des Spielers (playerDefenseBoost) geprüft.
+        const currentDefenseBoost = isPlayerTurn ? opponentDefenseBoost : playerDefenseBoost;
+        finalDamageReceived = Math.round(damageDealt * currentDefenseBoost);
+        
+        if (currentDefenseBoost < 1) {
+            document.getElementById('game-messages').innerHTML += ` 🛡️ Schaden um ${Math.round((1 - currentDefenseBoost) * 100)}% reduziert!`;
+        } else if (currentDefenseBoost > 1) {
+            document.getElementById('game-messages').innerHTML += ` 💔 Schaden um ${Math.round((currentDefenseBoost - 1) * 100)}% ERHÖHT! (Schwäche)`;
+        }
+        
+        if (isPlayerTurn) {
+            opponentHP -= finalDamageReceived;
+            opponentHP = Math.max(0, opponentHP);
+            showDamagePopup(defenderElement, finalDamageReceived, result.isPlayerCrit);
+        } else {
+            // Dies ist der Gegnerzug, Schaden geht an den Spieler.
+            playerHP -= finalDamageReceived;
+            playerHP = Math.max(0, playerHP);
+            showDamagePopup(defenderElement, finalDamageReceived, result.isPlayerCrit);
+        }
+        document.getElementById('game-messages').innerHTML += ` Verursacht/erleidet insgesamt **${finalDamageReceived}** Schaden.</p>`;
+    } else {
+        // Kein Schaden, wenn es z.B. eine Heilung war
+        document.getElementById('game-messages').innerHTML += ` Kein Angriffsschaden.</p>`;
+    }
+
+    // DEFENSE BOOST FÜR DEN VERTEIDIGER NACH DER ANWENDUNG AUF 1 ZURÜCKSETZEN
+    // HINWEIS: Dies simuliert, dass ein Schild-Effekt nur für den nächsten eingehenden Angriff gilt.
+    if (isPlayerTurn) {
+        // Spieler greift an, Gegner war Verteidiger. Setze Gegner-DEF zurück.
+        opponentDefenseBoost = 1; 
+    } else {
+        // Gegner greift an, Spieler war Verteidiger. Setze Spieler-DEF zurück.
+        playerDefenseBoost = 1;
+    }
+}
+
+// NEUE VERSION VON battle
+// === ASYNCHRONE BATTLE-FUNKTION ===
+async function battle(playerCard) {
+    if (isBattling || !playerCard || !opponentCard) return;
+
+    isBattling = true; 
+    
+    // Status initialisieren/zurücksetzen
+    playerHP = 100;
+    opponentHP = 100;
+    playerCooldowns = { special1: 0, special2: 0 };
+    opponentCooldowns = { special1: 0, special2: 0 };
+    
+    // Kampf-Boosts und Debuffs zurücksetzen
+    // playerDefenseBoost und opponentDefenseBoost bleiben erhalten, da sie in executeTurn zurückgesetzt werden
+    playerDamageBoost = 1;
+    playerNextTurnDamageBoost = 1;
+    playerTempLuckBoost = 0;
+    opponentNextTurnMiss = false;
+    opponentDamageOverTime = 0;
+    
+    opponentDamageBoost = 1;
+    opponentNextTurnDamageBoost = 1;
+    opponentTempLuckBoost = 0;
+    playerNextTurnMiss = false; 
+    playerDamageOverTime = 0;
+    
+    document.getElementById('start-battle-button').disabled = true;
+    document.getElementById('open-pack-button').disabled = true;
+
+    // Nutze playerCard, um die aktuellen Kampf-Statistiken zu erhalten
+    const playerStats = getCharacterCurrentStats(playerCard);
+    
+    // Visualisierung vorbereiten
+    document.getElementById('player-img').src = IMAGE_MAP[playerCard.name] || IMAGE_MAP["Standard"];
+    document.getElementById('opponent-img').src = IMAGE_MAP[opponentCard.name] || IMAGE_MAP["Standard"];
+    
+    document.getElementById('player-fighter').style.border = '';
+    document.getElementById('opponent-fighter').style.border = '';
+    
+    const updateBattleStats = () => {
+        // Nutze playerCard für die Anzeige
+        const currentStats = getCharacterCurrentStats(playerCard); 
+        document.getElementById('player-stats').innerHTML = `**${currentStats.name}** (Lv. ${currentStats.level})<br>ATK: ${Math.round(currentStats.atk * playerDamageBoost)} [Boost], LUCK: ${currentStats.luck}%<br>HP: ${playerHP}`;
+        document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${Math.round(opponentCard.atk * opponentDamageBoost)} [Boost], LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
+        updateHPBar('player-hp-fill', playerHP);
+        updateHPBar('opponent-hp-fill', opponentHP);
+    };
+    
+    updateBattleStats();
+
+
+    document.getElementById('game-messages').innerHTML = `<h2 class="battle-title">⚔️ KAMPF STARTET! ${playerStats.name} (Lv. ${playerStats.level}) vs. ${opponentCard.name} ⚔️</h2>`;
+
+    
+    // --- HAUPTSCHLEIFE FÜR DEN RUNDENBASIERTEN KAMPF ---
+    let turn = 1;
+    while (playerHP > 0 && opponentHP > 0) {
+        document.getElementById('game-messages').innerHTML += `<br>--- **RUNDE ${turn++}** ---`;
+        
+        // 0. Cooldowns herunterzählen und Status-Effekte vorbereiten
+        for (const key in playerCooldowns) if (playerCooldowns[key] > 0) playerCooldowns[key]--;
+        for (const key in opponentCooldowns) if (opponentCooldowns[key] > 0) opponentCooldowns[key]--;
+        
+        // Temporäre Buffs/Debuffs zurücksetzen, Next-Turn-Boosts anwenden
+        
+        // ****************************************************************
+        // KORREKTUR 1: playerDefenseBoost und opponentDefenseBoost WURDEN HIER ENTFERNT!
+        // ****************************************************************
+        opponentDamageBoost = opponentNextTurnDamageBoost;
+        opponentNextTurnDamageBoost = 1;
+        opponentTempLuckBoost = 0; 
+
+        playerDamageBoost = playerNextTurnDamageBoost;
+        playerNextTurnDamageBoost = 1;
+        playerTempLuckBoost = 0;
+        
+        updateBattleStats(); 
+        
+        
+        // ----------------------------------------------------
+        // --- 1. SCHADEN-ÜBER-ZEIT (DOT) ANWENDEN ---
+        // ----------------------------------------------------
+        if (opponentDamageOverTime > 0) {
+            opponentHP -= 10;
+            opponentHP = Math.max(0, opponentHP);
+            showDamagePopup('opponent-fighter', 10, false);
+            document.getElementById('game-messages').innerHTML += `<p style="color: green;">🤢 **${opponentCard.name}** verliert 10 HP durch Vergiftung (noch ${opponentDamageOverTime - 1} Runden).</p>`;
+            opponentDamageOverTime--;
+            updateBattleStats();
+            if (opponentHP <= 0) break;
+        }
+        if (playerDamageOverTime > 0) {
+            playerHP -= 10;
+            playerHP = Math.max(0, playerHP);
+            showDamagePopup('player-fighter', 10, false);
+            document.getElementById('game-messages').innerHTML += `<p style="color: green;">🤢 **${playerStats.name}** verliert 10 HP durch Vergiftung (noch ${playerDamageOverTime - 1} Runden).</p>`;
+            playerDamageOverTime--;
+            updateBattleStats();
+            if (playerHP <= 0) break;
+        }
+
+
+        // ----------------------------------------------------
+        // --- 2. RUNDE: SPIELER-ANGRIFF ---
+        // ----------------------------------------------------
+        
+        const playerSelectedAction = await waitForPlayerAction(playerStats); 
+        await executeTurn(playerCard, opponentCard, playerSelectedAction, true); // ÜBERGABE playerCard
+        
+        if (opponentHP <= 0) break;
+
+        // ----------------------------------------------------
+        // --- 3. RUNDE: GEGNER-ANGRIFF (KI-gesteuert) ---
+        // ----------------------------------------------------
+        await delay(1500); 
+        
+        if (playerNextTurnMiss) {
+            document.getElementById('game-messages').innerHTML += `<p>😴 **${opponentCard.name}**'s Betäubung hält an! Spieler setzt diesen Zug aus.</p>`;
+            playerNextTurnMiss = false;
+        } else {
+            const opponentAction = getOpponentAction(opponentCard, opponentHP, playerHP);
+            await executeTurn(opponentCard, playerCard, opponentAction, false); // ÜBERGABE playerCard als Verteidiger
+        }
+
+        await delay(1000); 
+    }
+
+    // --- KAMPF ENDE & ERGEBNIS ---
+    isBattling = false; 
+    document.getElementById('start-battle-button').disabled = false; 
+    document.getElementById('open-pack-button').disabled = false; 
+    
+    document.getElementById('battle-actions').style.display = 'none'; 
+
+    await delay(2000); 
+
+    let finalMessage = "";
+    if (playerHP > 0) {
+        coins += 1;
+        gainXP(playerCard.id, XP_PER_WIN); // NUTZT playerCard.id
+        finalMessage = `🏆 **SIEG!** Du hast gewonnen, 1 Coin und ${XP_PER_WIN} XP erhalten!`;
+        document.getElementById('player-fighter').style.border = '3px solid #4CAF50';
+        document.getElementById('opponent-fighter').style.border = '3px solid #F44336';
+    } else {
+        finalMessage = `😔 **NIEDERLAGE!** Du hast verloren.`;
+        document.getElementById('player-fighter').style.border = '3px solid #F44336';
+        document.getElementById('opponent-fighter').style.border = '3px solid #4CAF50';
+    }
+
+    document.getElementById('game-messages').innerHTML += `<br><h2>${finalMessage}</h2>`;
+    saveGame();
+}
+
+// Pack-Öffnung und Speicher-Logik
+async function openPack() {
+    const packButton = document.getElementById('open-pack-button');
+    if (coins < 3) {
+        document.getElementById('game-messages').innerHTML = "FEHLER: Du brauchst 3 Münzen!";
+        packButton.classList.add('shake-button');
+        await delay(400); 
+        packButton.classList.remove('shake-button');
+        return;
+    }
+
+    packButton.disabled = true;
+    document.getElementById('start-battle-button').disabled = true;
+
+    coins -= 3;
+    const newCard = drawCard();
+    collection.push(newCard); 
+    
+    saveGame(); 
+    updateUI(); 
+    
+    const baseStats = getCharacterBaseStats(newCard.name);
+
+    const overlay = document.getElementById('pack-opening-overlay');
+    const cardRevealContainer = document.getElementById('card-reveal-container');
+    const revealedCardImage = document.getElementById('revealed-card-image');
+    const revealedCardInfo = document.getElementById('revealed-card-info');
+
+    overlay.classList.add('active');
+    cardRevealContainer.classList.remove('revealed'); 
+    revealedCardImage.style.backgroundImage = `url('${IMAGE_MAP[newCard.name] || IMAGE_MAP["Standard"]}')`;
+    revealedCardInfo.innerHTML = ``; 
+
+    await delay(500); 
+
+    cardRevealContainer.classList.add('revealed');
+    
+    await delay(1000); 
+
+    revealedCardInfo.innerHTML = `
+        **${newCard.name}** (ID: ${newCard.id})<br>
+        (${baseStats.rarity})<br>
+        ATK: ${baseStats.atk}, LUCK: ${baseStats.luck}%
+    `;
+
+    document.getElementById('game-messages').innerHTML = `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${baseStats.rarity})!`;
+    
+    await new Promise(resolve => {
+        overlay.onclick = (e) => {
+            if (e.target === overlay || e.target.closest('.card-reveal-container')) {
+                overlay.classList.remove('active');
+                overlay.onclick = null; 
+                resolve();
+            }
+        };
+    });
+    
+    packButton.disabled = false;
+    document.getElementById('start-battle-button').disabled = false;
+
+    saveGame();
+    updateUI();
+}
+
+// 3. SPIELSTAND SPEICHERN & LADEN
+function saveGame() {
+    localStorage.setItem('brainrotCoins', coins);
+    localStorage.setItem('brainrotCollection', JSON.stringify(collection));
+    localStorage.setItem('brainrotNextCardId', nextCardId);
+}
+
+function loadGame() {
+    coins = parseInt(localStorage.getItem('brainrotCoins')) || 0;
+    nextCardId = parseInt(localStorage.getItem('brainrotNextCardId')) || 1;
+    
+    let loadedCollection;
+    try {
+        loadedCollection = JSON.parse(localStorage.getItem('brainrotCollection'));
+        if (!Array.isArray(loadedCollection)) {
+            loadedCollection = [];
+        }
+    } catch (e) {
+        loadedCollection = [];
+    }
+    
+    collection = loadedCollection;
+
+    if (collection.length === 0) {
+        // Starte mit Luca, Franco und Silvia
+        collection.push({ id: nextCardId++, name: "Luca", level: 1, xp: 0 });
+        collection.push({ id: nextCardId++, name: "Franco", level: 1, xp: 0 });
+        collection.push({ id: nextCardId++, name: "Silvia", level: 1, xp: 0 });
+        
+        if (coins < 3) coins = 3; 
+
+        document.getElementById('game-messages').innerHTML = "Spiel neu initialisiert! Du hast deine Startkarten und 3 Münzen erhalten.";
+        saveGame();
+    }
+}
+
+
+// 4. UI-MANIPULATION
+function updateUI() {
+    document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
+    
+    const collectionList = document.getElementById('collection-list');
+    collectionList.innerHTML = ''; 
+    
+    const sortedCollection = [...collection].sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return b.level - a.level; 
+    });
+
+    sortedCollection.forEach(card => {
+        const currentStats = getCharacterCurrentStats(card);
+        const baseStats = getCharacterBaseStats(card.name);
+
+        const li = document.createElement('li');
+        li.className = 'card-list-item';
+        
+        li.innerHTML = `
+            <div>
+                <strong>${card.name}</strong> (Lv. ${card.level}) (ID: ${card.id}) - ${baseStats.rarity}<br>
+                ATK: ${currentStats.atk}, LUCK: ${currentStats.luck}% | XP: ${card.xp}/${XP_PER_LEVEL * currentStats.level}
+            </div>
+            <div>
+                <button class="select-main" onclick="setSynthMain(${card.id})">Haupt</button>
+                <button class="select-sacrifice" onclick="setSynthSacrifice(${card.id})">Opfer</button>
+            </div>
+        `;
+        collectionList.appendChild(li);
+    });
+    
+    const charSelect = document.getElementById('char-select');
+    const selectedId = charSelect.value;
+    charSelect.innerHTML = '';
+
+    const selectableCards = collection.filter(card => card.level > 0);
+    
+    if (selectableCards.length === 0) {
+        const option = document.createElement('option');
+        option.textContent = "Keine Kämpfer verfügbar!";
+        charSelect.appendChild(option);
+    } else {
+        let cardToSelect = null;
+        selectableCards.forEach(card => {
+            const stats = getCharacterCurrentStats(card);
+            const option = document.createElement('option');
+            option.value = card.id;
+            option.textContent = `${card.name} (Lv. ${stats.level}) - ATK: ${stats.atk}`;
+            
+            // Setzt die vorherige Auswahl wieder her, oder wählt die erste Karte
+            if (String(card.id) === selectedId) {
+                option.selected = true;
+                cardToSelect = card;
+            }
+            charSelect.appendChild(option);
+        });
+        
+        // WICHTIG: Die globale selectedCard muss aktualisiert werden
+        const currentSelectionId = parseInt(charSelect.value);
+        selectedCard = collection.find(c => c.id === currentSelectionId) || selectableCards[0];
+    }
+
+    updateSynthUI();
+}
+
+function updateSynthUI() {
+    const mainCard = collection.find(c => c.id === synthMainCardId);
+    const sacrificeCard = collection.find(c => c.id === synthSacrificeCardId);
+    const synthButton = document.getElementById('start-synth-button');
+    const status = document.getElementById('synth-status');
+
+    document.getElementById('synth-main-card').textContent = `Hauptkarte: ${mainCard ? mainCard.name + ' (Lv. ' + mainCard.level + ')' : 'Keine'}`;
+    document.getElementById('synth-sacrifice-card').textContent = `Opferkarte: ${sacrificeCard ? sacrificeCard.name + ' (Lv. ' + sacrificeCard.level + ')' : 'Keine'}`;
+
+    let canSynth = false;
+    if (mainCard && sacrificeCard) {
+        if (mainCard.id === sacrificeCard.id) {
+            status.textContent = "FEHLER: Haupt- und Opferkarte müssen unterschiedlich sein!";
+        } else if (mainCard.name !== sacrificeCard.name) {
+            status.textContent = "FEHLER: Karten müssen vom gleichen Charakter sein!";
+        } else if (mainCard.level >= 10) {
+            status.textContent = "FEHLER: Hauptkarte hat Max-Level erreicht (10)!";
+        } else {
+            const rarity = getCharacterBaseStats(mainCard.name).rarity;
+            let xpGained = 50;
+            if (rarity === "Ungewöhnlich") xpGained = 100;
+            else if (rarity === "Selten") xpGained = 150;
+            else if (rarity === "Episch") xpGained = 200;
+            else if (rarity === "Legendär") xpGained = 300;
+
+            status.textContent = `Bereit! ${mainCard.name} erhält ${xpGained} XP.`;
+            canSynth = true;
+        }
+    } else {
+        status.textContent = "Wähle Haupt- und Opferkarte.";
+    }
+
+    synthButton.disabled = !canSynth;
+}
+
+// 5. KLICK-HANDLER FÜR BUTTONS und SYNTH
+
+function setSynthMain(cardId) {
+    synthMainCardId = cardId;
+    updateSynthUI();
+}
+
+function setSynthSacrifice(cardId) {
+    synthSacrificeCardId = cardId;
+    updateSynthUI();
+}
+
+function handleSynthClick() {
+    const message = synthCharacter(synthMainCardId, synthSacrificeCardId);
+    document.getElementById('game-messages').innerHTML = `<h2>${message}</h2>`;
+    updateUI();
+}
+
+// NEUE VERSION VON handleFightClick
+async function handleFightClick() {
+    const selectedId = parseInt(document.getElementById('char-select').value);
+    const playerCardForBattle = collection.find(c => c.id === selectedId);
+    
+    if (!playerCardForBattle) {
+        document.getElementById('game-messages').innerHTML = "Du musst einen Kämpfer auswählen!";
+        return;
+    }
+    
+    // Setze selectedCard global nur für UI-Anzeige/Stat-Abruf außerhalb des Kampfes
+    selectedCard = playerCardForBattle; 
+    
+    const opponentBase = drawCard();
+    opponentCard = getCharacterBaseStats(opponentBase.name); 
+
+    // Übergib die tatsächlich ausgewählte Karte an die Kampf-Funktion
+    await battle(playerCardForBattle); 
+    updateUI();
+}
+
+async function handlePackClick() {
+    await openPack();
+}
+
+// Initialer Aufruf
+window.onload = () => {
+    loadGame(); 
+    updateUI(); 
+};
+
+// --- ENDE DES JAVASCRIPT CODES ---
+</script>
+</body>
+</html>

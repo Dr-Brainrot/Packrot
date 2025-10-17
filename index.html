@@ -134,9 +134,9 @@ body {
     color: white;
 }
 
-/* --- KAMPF VISUALISIERUNG (Unverändert) --- */
+/* --- KAMPF VISUALISIERUNG --- */
 .fight-container { display: flex; justify-content: space-around; align-items: flex-start; margin: 20px 0; text-align: center; }
-.fighter-panel { width: 45%; background-color: #eee; padding: 10px; border-radius: 8px; min-height: 250px; position: relative; }
+.fighter-panel { width: 45%; background-color: #eee; padding: 10px; border-radius: 8px; min-height: 250px; position: relative; transition: all 0.3s; }
 .char-img { width: 100%; max-width: 120px; height: auto; border: 3px solid #333; border-radius: 4px; margin-bottom: 5px; }
 .vs-text { font-size: 24px; font-weight: bold; color: #d32f2f; line-height: 150px; }
 .fighter-stats-info { font-weight: bold; min-height: 30px; margin: 5px 0 0 0; }
@@ -147,6 +147,34 @@ body {
 .damage-popup { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); color: red; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 3px black; opacity: 0; animation: floatup 1s forwards; pointer-events: none; }
 .damage-popup.crit { color: #ffc107; font-size: 30px; }
 @keyframes floatup { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
+
+/* --- KORRIGIERTE CSS-ANIMATIONEN FÜR DEN ANGRIFF --- */
+@keyframes attack-right {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(15px) scale(1.05); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); }
+    100% { transform: translateX(0); }
+}
+@keyframes attack-left {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-15px) scale(1.05); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); }
+    100% { transform: translateX(0); }
+}
+@keyframes hit-effect {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.95); background-color: #ffcccc; }
+}
+
+.fighter-panel.attacking-player { 
+    animation: attack-right 0.3s ease-in-out; 
+}
+.fighter-panel.attacking-opponent { 
+    animation: attack-left 0.3s ease-in-out; 
+}
+.fighter-panel.hit {
+    animation: hit-effect 0.3s ease-in-out;
+}
+/* --- ENDE KAMPF CSS --- */
+
 
 /* --- PACK-ÖFFNUNGS-ANIMATION (Unverändert) --- */
 #pack-opening-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out; }
@@ -323,24 +351,38 @@ function updateHPBar(hpFillId, currentHP) {
     }
 }
 
+// === KORRIGIERTE ANIMATE ATTACK FUNKTION ===
 function animateAttack(attackerElementId, defenderElementId) {
     return new Promise(resolve => {
         const attacker = document.getElementById(attackerElementId);
         const defender = document.getElementById(defenderElementId);
+        // Bestimmt die Klasse basierend auf der ID (z.B. 'player-fighter' -> 'player')
+        const attackClass = `attacking-${attackerElementId.split('-')[0]}`;
         
-        attacker.classList.add(`attacking-${attackerElementId.split('-')[0]}`);
-        defender.classList.add('hit'); 
+        // Timeout als Fallback (350ms > 300ms Animation), falls 'animationend' fehlschlägt.
+        const timeout = setTimeout(() => {
+            attacker.classList.remove(attackClass);
+            defender.classList.remove('hit');
+            resolve();
+        }, 350); 
         
+        // Event Listener, der den Timeout löscht, wenn die Animation regulär endet.
         function handleAnimationEnd() {
-            attacker.classList.remove(`attacking-${attackerElementId.split('-')[0]}`);
+            clearTimeout(timeout);
+            attacker.classList.remove(attackClass);
             defender.classList.remove('hit');
             attacker.removeEventListener('animationend', handleAnimationEnd);
             resolve();
         }
         
-        attacker.addEventListener('animationend', handleAnimationEnd);
+        // Listener nur einmal hinzufügen und Animation starten (0.3s)
+        attacker.addEventListener('animationend', handleAnimationEnd, { once: true });
+        
+        attacker.classList.add(attackClass);
+        defender.classList.add('hit'); 
     });
 }
+// === ENDE KORRIGIERTE ANIMATE ATTACK FUNKTION ===
 
 function calculateStrength(charData) {
     // Wenn charData das volle Objekt mit ATK/LUCK ist (Gegner-Karte)
@@ -552,6 +594,8 @@ async function battle() {
 
         document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
         updateHPBar('player-hp-fill', playerHP);
+        
+        await delay(1000); // Verzögerung zwischen den Runden
     }
 
     // --- KAMPF ENDE & ERGEBNIS ---

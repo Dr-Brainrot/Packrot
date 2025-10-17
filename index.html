@@ -17,7 +17,7 @@ body {
 }
 .brainrot-game {
     padding: 25px;
-    max-width: 750px; /* Weiter vergrößert für die detaillierten Buttons */
+    max-width: 750px; 
     width: 90%; 
     margin: 20px auto;
     border: 3px solid #d32f2f; 
@@ -122,7 +122,7 @@ body {
     transition: all 0.3s; 
 }
 
-/* HP BAR ETC. (Unverändert) */
+/* HP BAR ETC. */
 .char-img { width: 100%; max-width: 120px; height: auto; border: 3px solid #333; border-radius: 4px; margin-bottom: 5px; }
 .vs-text { font-size: 24px; font-weight: bold; color: #d32f2f; line-height: 150px; }
 .fighter-stats-info { font-weight: bold; min-height: 30px; margin: 5px 0 0 0; }
@@ -134,7 +134,7 @@ body {
 .damage-popup.crit { color: #ffc107; font-size: 30px; }
 @keyframes floatup { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
 
-/* KAMPF ANIMATIONEN (Unverändert) */
+/* KAMPF ANIMATIONEN */
 @keyframes attack-right { 0% { transform: translateX(0); } 50% { transform: translateX(15px) scale(1.05); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); } 100% { transform: translateX(0); } }
 @keyframes attack-left { 0% { transform: translateX(0); } 50% { transform: translateX(-15px) scale(1.05); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); } 100% { transform: translateX(0); } }
 @keyframes hit-effect { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); background-color: #ffcccc; } }
@@ -144,7 +144,7 @@ body {
 
 /* NEU: AKTIONSMENÜ */
 #battle-actions {
-    display: none; /* Standardmäßig versteckt */
+    display: none; 
     justify-content: space-around;
     padding: 10px;
     margin-top: 15px;
@@ -153,7 +153,7 @@ body {
     background-color: #f9f9f9;
 }
 #battle-actions button {
-    padding: 10px 8px;
+    padding: 5px 4px; /* Padding reduziert */
     border: 2px solid #ccc;
     border-radius: 6px;
     cursor: pointer;
@@ -161,10 +161,11 @@ body {
     transition: background-color 0.2s, opacity 0.2s;
     width: 31%;
     text-align: center;
-    font-size: 14px;
-    height: 60px; /* Feste Höhe für gleiche Größe */
+    font-size: 12px; /* Schriftgröße reduziert */
+    height: 65px; /* Höhe etwas erhöht */
     position: relative;
     box-sizing: border-box;
+    line-height: 1.2; /* Zeilenhöhe für besseres Umbrechen */
 }
 #battle-actions button:hover:not(:disabled) {
     background-color: #e0e0e0;
@@ -198,7 +199,7 @@ body {
 .action-special1 { background-color: #FF5722; color: white; }
 .action-special2 { background-color: #4CAF50; color: white; }
 
-/* --- Sammlung und Synth CSS (Unverändert) --- */
+/* --- Sammlung und Synth CSS --- */
 #collection-list { padding-left: 0; }
 .card-list-item { list-style-type: none; padding: 5px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; }
 .card-list-item strong { flex-grow: 1; }
@@ -206,7 +207,7 @@ body {
 .select-main { background-color: #4CAF50; color: white; }
 .select-sacrifice { background-color: #F44336; color: white; }
 
-/* --- PACK-ÖFFNUNGS-ANIMATION (Unverändert) --- */
+/* --- PACK-ÖFFNUNGS-ANIMATION --- */
 #pack-opening-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out; }
 #pack-opening-overlay.active { opacity: 1; visibility: visible; }
 .card-reveal-container { perspective: 1000px; width: 180px; height: 250px; position: relative; cursor: pointer; }
@@ -295,62 +296,61 @@ body {
 // --- START DES JAVASCRIPT CODES ---
 
 // 1. SPIELDATEN
-// NEU: Fähigkeits-Datenstruktur hinzugefügt
+// NEU: Fähigkeits-Datenstruktur mit GEKÜRZTEN Beschreibungen
 const CHARACTER_POOL = [
     { name: "Gert", atk: 50, luck: 70, rarity: "Legendär", weight: 2, abilities: {
         'base': { name: "Mano-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Doppelter Wetteinsatz", desc: "Basis + 50% Chance auf doppelten Angriff in der nächsten Runde. (CD: 2)", effect: 'doubleNextTurn', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Barriere di Nonna", desc: "Geringerer Schaden in diesem Zug, aber +40% Schild gegen nächsten Gegner-Angriff. (CD: 3)", effect: 'shield40', cooldown: 3, color: "action-special2" }
+        'special1': { name: "Doppelter Wetteinsatz", desc: "Basis + Chance auf Doppelangriff in nä. Runde (CD: 2)", effect: 'doubleNextTurn', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Barriere di Nonna", desc: "Leicht reduzierter Schaden & 40% Schild nä. Zug (CD: 3)", effect: 'shield40', cooldown: 3, color: "action-special2" }
     }},
     { name: "Ciro", atk: 80, luck: 30, rarity: "Episch", weight: 5, abilities: {
         'base': { name: "Basis-Streich", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Aggressivo", desc: "Erheblich erhöhter Schaden. Eigene Verteidigung wird für 1 Zug ignoriert. (CD: 3)", effect: 'highDamageLowDefense', cooldown: 3, color: "action-special1" },
-        'special2': { name: "Zorniger Wurf", desc: "50% Chance auf sofort doppelten Schaden, 50% Chance auf keinen Schaden. (CD: 2)", effect: 'riskDoubleDamage', cooldown: 2, color: "action-special2" }
+        'special1': { name: "Aggressivo", desc: "Hoher Schaden, aber eigene DEF in nä. Runde ignoriert (CD: 3)", effect: 'highDamageLowDefense', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Zorniger Wurf", desc: "50% Chance auf 2x Schaden, 50% Chance auf 0 Schaden (CD: 2)", effect: 'riskDoubleDamage', cooldown: 2, color: "action-special2" }
     }},
     { name: "Pino", atk: 65, luck: 55, rarity: "Selten", weight: 10, abilities: {
         'base': { name: "Normaler Schlag", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Starker Kopfstoß", desc: "Verursacht erhöhten Schaden (+25%). (CD: 2)", effect: 'damage25', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Widerspenstiger Tritt", desc: "Verursacht Basis-Schaden und betäubt den Gegner (50% Chance, dass Gegner im nächsten Zug aussetzt). (CD: 3)", effect: 'stun', cooldown: 3, color: "action-special2" }
+        'special1': { name: "Starker Kopfstoß", desc: "+25% Schaden (CD: 2)", effect: 'damage25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Widerspenstiger Tritt", desc: "Basis-Schaden + 50% Chance auf Betäubung Gegner (CD: 3)", effect: 'stun', cooldown: 3, color: "action-special2" }
     }},
     { name: "Maria", atk: 40, luck: 80, rarity: "Selten", weight: 10, abilities: {
         'base': { name: "Italienischer Witz", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Glücksverdopplung", desc: "Erhöht die Glücks-Chance (Luck) in diesem Zug um 50%. (CD: 3)", effect: 'luck50', cooldown: 3, color: "action-special1" },
-        'special2': { name: "Kaffee-Pause", desc: "Heilt 25 HP. Verursacht keinen Schaden in diesem Zug. (CD: 4)", effect: 'heal25', cooldown: 4, color: "action-special2" }
+        'special1': { name: "Glücksverdopplung", desc: "+50% LUCK für diesen Zug (CD: 3)", effect: 'luck50', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Kaffee-Pause", desc: "Heilt 25 HP. Kein Angriffsschaden (CD: 4)", effect: 'heal25', cooldown: 4, color: "action-special2" }
     }},
     { name: "Luca", atk: 50, luck: 60, rarity: "Gewöhnlich", weight: 20, abilities: {
         'base': { name: "Basis-Stoß", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Schnelle Wunde", desc: "Etwas erhöhter Schaden (+15%). (CD: 1)", effect: 'damage15', cooldown: 1, color: "action-special1" },
-        'special2': { name: "Spaghetti-Reparatur", desc: "Heilt 15 HP. (CD: 3)", effect: 'heal15', cooldown: 3, color: "action-special2" }
+        'special1': { name: "Schnelle Wunde", desc: "+15% Schaden (CD: 1)", effect: 'damage15', cooldown: 1, color: "action-special1" },
+        'special2': { name: "Spaghetti-Reparatur", desc: "Heilt 15 HP (CD: 3)", effect: 'heal15', cooldown: 3, color: "action-special2" }
     }},
     { name: "Giulia", atk: 45, luck: 65, rarity: "Gewöhnlich", weight: 20, abilities: {
         'base': { name: "Fächer-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Abwehr-Fächer", desc: "Reduziert den nächsten eingehenden Schaden um 25%. (CD: 2)", effect: 'shield25', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Schneller Stich", desc: "Verursacht 2 Angriffe mit halbem Schaden (Chance auf 2x Crit). (CD: 4)", effect: 'doubleHit', cooldown: 4, color: "action-special2" }
+        'special1': { name: "Abwehr-Fächer", desc: "Reduziert nächsten Schaden um 25% (CD: 2)", effect: 'shield25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Schneller Stich", desc: "Zwei Angriffe mit halbem Schaden (CD: 4)", effect: 'doubleHit', cooldown: 4, color: "action-special2" }
     }},
-    // Zusätzliche Charaktere mit Basis-Fähigkeiten, falls im Pool, aber hier nicht detailliert
     { name: "Il Baffo", atk: 75, luck: 45, rarity: "Ungewöhnlich", weight: 15, abilities: {
         'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Wut", desc: "Erhöhter Schaden (+20%), aber 10 HP Selbstschaden. (CD: 2)", effect: 'damage20Self10', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Einschüchterung", desc: "50% Chance, dass der Gegner im nächsten Zug nur halben Schaden macht. (CD: 3)", effect: 'opponentDamageDown', cooldown: 3, color: "action-special2" }
+        'special1': { name: "Wut", desc: "+20% Schaden, aber 10 HP Selbstschaden (CD: 2)", effect: 'damage20Self10', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Einschüchterung", desc: "50% Chance auf halben Gegner-Schaden nä. Runde (CD: 3)", effect: 'opponentDamageDown', cooldown: 3, color: "action-special2" }
     }},
     { name: "La Nonna", atk: 35, luck: 90, rarity: "Ungewöhnlich", weight: 15, abilities: {
         'base': { name: "Basis-Klaps", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Trost", desc: "Heilt 20 HP, aber verursacht keinen Schaden. (CD: 2)", effect: 'heal20', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Guacamole", desc: "50% Chance, dass Gegner 10 HP Schaden pro Zug über 2 Runden nimmt (Dot). (CD: 4)", effect: 'poison2', cooldown: 4, color: "action-special2" }
+        'special1': { name: "Trost", desc: "Heilt 20 HP. Kein Schaden (CD: 2)", effect: 'heal20', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Guacamole", desc: "50% Chance auf Schaden über Zeit (2 Runden) (CD: 4)", effect: 'poison2', cooldown: 4, color: "action-special2" }
     }},
     { name: "Franco", atk: 60, luck: 50, rarity: "Gewöhnlich", weight: 20, abilities: {
         'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Kompakt-Angriff", desc: "Verursacht 15% mehr Schaden. (CD: 2)", effect: 'damage15', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Adrenalin", desc: "Erhöht die eigene ATK im nächsten Zug um 30%. (CD: 3)", effect: 'atkBoost30', cooldown: 3, color: "action-special2" }
+        'special1': { name: "Kompakt-Angriff", desc: "+15% Schaden (CD: 2)", effect: 'damage15', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Adrenalin", desc: "+30% ATK im nächsten Zug (CD: 3)", effect: 'atkBoost30', cooldown: 3, color: "action-special2" }
     }},
     { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20, abilities: {
         'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
-        'special1': { name: "Taktischer Rückzug", desc: "Verursacht 50% weniger Schaden, aber 50% Chance auf keinen eingehenden Schaden in diesem Zug. (CD: 2)", effect: 'avoid50', cooldown: 2, color: "action-special1" },
-        'special2': { name: "Fokus", desc: "Erhöht die eigene LUCK dauerhaft um 5. (CD: 5)", effect: 'luckPerm5', cooldown: 5, color: "action-special2" }
+        'special1': { name: "Taktischer Rückzug", desc: "50% Schaden, 50% Chance auf 0 eingehenden Schaden (CD: 2)", effect: 'avoid50', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Fokus", desc: "LUCK permanent um 5 erhöht (CD: 5)", effect: 'luckPerm5', cooldown: 5, color: "action-special2" }
     }},
 ];
 
-// --- BILDER DATENSTRUKTUR (Unverändert) ---
+// --- BILDER DATENSTRUKTUR ---
 const IMAGE_MAP = {
     "Gert": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603658844.jpg", 
     "Ciro": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603775510.jpg",
@@ -379,6 +379,8 @@ let opponentCard = null;
 let playerHP = 100; 
 let opponentHP = 100; 
 let playerActionPromiseResolve = null; 
+let synthMainCardId = null;
+let synthSacrificeCardId = null;
 
 // NEU: Cooldowns und temporäre Status-Effekte
 let playerCooldowns = { special1: 0, special2: 0 };
@@ -470,7 +472,6 @@ function animateAttack(attackerElementId, defenderElementId) {
     });
 }
 
-// Funktion, die LUCK und LUCK-Bonus berücksichtigt
 function calculateStrength(charData, tempLuck = 0) {
     const atk = charData.atk;
     const luck = charData.luck + tempLuck; 
@@ -479,7 +480,7 @@ function calculateStrength(charData, tempLuck = 0) {
     let bonus = 0;
     let isCrit = false;
     if (luckRoll <= luck) {
-        bonus = (atk * 0.33); // 33% Bonus-Schaden bei Glückstreffer
+        bonus = (atk * 0.33); 
         isCrit = true;
     }
     return { strength: atk + bonus, isCrit: isCrit };
@@ -489,7 +490,6 @@ function getCharacterBaseStats(name) {
     return CHARACTER_POOL.find(c => c.name === name);
 }
 
-// NEU: Stärkere ATK bei höherem Level berücksichtigen
 function getCharacterCurrentStats(card) {
     const baseStats = getCharacterBaseStats(card.name);
     if (!baseStats) return null;
@@ -505,7 +505,7 @@ function getCharacterCurrentStats(card) {
         rarity: baseStats.rarity,
         level: card.level,
         xp: card.xp,
-        abilities: baseStats.abilities // Fügt die Fähigkeiten hinzu
+        abilities: baseStats.abilities 
     };
 }
 
@@ -530,9 +530,7 @@ function gainXP(cardId, xp) {
     saveGame();
 }
 
-// Synth-Funktionen (unverändert)
 function synthCharacter(mainCardId, sacrificeCardId) {
-    // ... (Logik unverändert)
     const mainCard = collection.find(c => c.id === mainCardId);
     const sacrificeCardIndex = collection.findIndex(c => c.id === sacrificeCardId);
 
@@ -591,7 +589,7 @@ function drawCard() {
     return newCard;
 }
 
-// NEUE FUNKTION: Generiert und zeigt die Aktionsbuttons an
+// Generiert und zeigt die Aktionsbuttons an
 function showActionButtons(playerStats) {
     const actionContainer = document.getElementById('battle-actions');
     actionContainer.innerHTML = '';
@@ -629,7 +627,7 @@ function showActionButtons(playerStats) {
     actionContainer.style.display = 'flex';
 }
 
-// NEUE FUNKTION: Wartet auf die Spieleraktion
+// Wartet auf die Spieleraktion
 function waitForPlayerAction(playerStats) {
     showActionButtons(playerStats);
     return new Promise(resolve => {
@@ -637,7 +635,7 @@ function waitForPlayerAction(playerStats) {
     });
 }
 
-// NEUE FUNKTION: Wird beim Klick auf einen Aktionsbutton aufgerufen
+// Wird beim Klick auf einen Aktionsbutton aufgerufen
 function selectAction(actionKey) {
     if (playerActionPromiseResolve) {
         // Cooldown für Spezialfähigkeiten setzen
@@ -653,7 +651,7 @@ function selectAction(actionKey) {
 }
 
 
-// === ASYNCHRONE BATTLE-FUNKTION (Großes Update) ===
+// === ASYNCHRONE BATTLE-FUNKTION ===
 async function battle() {
     if (isBattling || !selectedCard || !opponentCard) return;
 
@@ -684,7 +682,7 @@ async function battle() {
     document.getElementById('opponent-fighter').style.border = '';
     
     const updateBattleStats = () => {
-        const currentStats = getCharacterCurrentStats(selectedCard); // Neu laden, da LUCK permanent steigen kann (Silvia)
+        const currentStats = getCharacterCurrentStats(selectedCard); 
         document.getElementById('player-stats').innerHTML = `**${currentStats.name}** (Lv. ${currentStats.level})<br>ATK: ${currentStats.atk * playerDamageBoost} [Boost], LUCK: ${currentStats.luck}%<br>HP: ${playerHP}`;
         document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
         updateHPBar('player-hp-fill', playerHP);
@@ -711,13 +709,13 @@ async function battle() {
         
         // Temporäre Buffs (Defense) speichern und zurücksetzen (Damage/Luck)
         const currentDefenseBoost = playerDefenseBoost;
-        playerDefenseBoost = 1; // Defense Boost ist immer nur für EINEN Gegnerzug gültig
+        playerDefenseBoost = 1; 
         
         playerDamageBoost = playerNextTurnDamageBoost;
         playerNextTurnDamageBoost = 1;
-        playerTempLuckBoost = 0; // Temporärer Luck Boost ist nur für EINEN eigenen Zug gültig
+        playerTempLuckBoost = 0; 
         
-        updateBattleStats(); // UI-Update nach Buff-Reset
+        updateBattleStats(); 
         
         // ----------------------------------------------------
         // --- 1. RUNDE: SPIELER-ANGRIFF (Wartet auf Auswahl) ---
@@ -730,7 +728,7 @@ async function battle() {
         let playerDamage = 0;
         let isPlayerCrit = false;
         
-        // Spezialeffekte VOR dem Angriff anwenden (Heilung, Selbstschaden, Luck-Boost)
+        // Spezialeffekte VOR dem Angriff anwenden
         if (actionDetails.effect === 'heal25' || actionDetails.effect === 'heal20' || actionDetails.effect === 'heal15') {
             const healAmount = parseInt(actionDetails.effect.replace('heal', ''));
             playerHP += healAmount;
@@ -759,32 +757,31 @@ async function battle() {
         for (let i = 0; i < hitCount; i++) {
             let currentHitDamage = baseDamage;
 
-            // Luck und Crit-Schaden anwenden (wenn nicht schon geschehen)
-            if (i === 0) { // Nur einmal Crit prüfen, oder bei Multi-Hit jedes Mal? Hier: Jedes Mal, aber nur der Base-Schaden wird geteilt.
+            if (i === 0) { 
                 if (isPlayerCrit) {
                     currentHitDamage = Math.round(currentHitDamage * 1.5);
                     actionMessage += " ⭐ Glückstreffer!";
                 }
             }
             
-            // Spieler-Damage-Boosts anwenden (aus Franco's Fähigkeit oder Gert's Doppelter Wetteinsatz)
+            // Spieler-Damage-Boosts anwenden
             currentHitDamage = Math.round(currentHitDamage * playerDamageBoost); 
 
             // AKTIONSSPEZIFISCHE SCHADENSMODIFIKATIONEN
             if (actionDetails.effect === 'doubleNextTurn') {
-                playerNextTurnDamageBoost = 2; // setzt Buff für nächsten Zug
-                currentHitDamage = Math.round(currentHitDamage * 1.0); // Basis-Schaden
+                playerNextTurnDamageBoost = 2; 
+                currentHitDamage = Math.round(currentHitDamage * 1.0); 
                 actionMessage += " (Bereitet Doppelangriff für nächste Runde vor)";
             } else if (actionDetails.effect === 'shield40') {
-                playerDefenseBoost = 0.6; // 40% Schild
-                currentHitDamage = Math.round(currentHitDamage * 0.7); // 30% weniger Schaden in diesem Zug
+                playerDefenseBoost = 0.6; 
+                currentHitDamage = Math.round(currentHitDamage * 0.7); 
             } else if (actionDetails.effect === 'damage25') {
                 currentHitDamage = Math.round(currentHitDamage * 1.25);
             } else if (actionDetails.effect === 'damage15' || actionDetails.effect === 'kompakt') {
                 currentHitDamage = Math.round(currentHitDamage * 1.15);
             } else if (actionDetails.effect === 'highDamageLowDefense') {
-                currentHitDamage = Math.round(currentHitDamage * 1.4); // 40% mehr Schaden
-                playerDefenseBoost = 2.0; // Doppelt so viel Schaden nehmen im nächsten Zug
+                currentHitDamage = Math.round(currentHitDamage * 1.4); 
+                playerDefenseBoost = 2.0; 
             } else if (actionDetails.effect === 'riskDoubleDamage') {
                 if (Math.random() < 0.5) { 
                     currentHitDamage *= 2; 
@@ -794,13 +791,13 @@ async function battle() {
                     actionMessage += " 💧 KEIN SCHADEN verursacht!";
                 }
             } else if (actionDetails.effect === 'avoid50') {
-                currentHitDamage = Math.round(currentHitDamage * 0.5); // 50% weniger Schaden
+                currentHitDamage = Math.round(currentHitDamage * 0.5); 
                 if (Math.random() < 0.5) {
-                    currentDefenseBoost = 0; // 50% Chance, 100% Schaden zu vermeiden
+                    playerDefenseBoost = 0; 
                     actionMessage += " 👻 Gegner-Angriff in diesem Zug zu 100% abgewehrt!";
                 }
             } else if (actionDetails.effect === 'doubleHit') {
-                currentHitDamage = Math.round(currentHitDamage * 0.5); // Halber Schaden pro Hit
+                currentHitDamage = Math.round(currentHitDamage * 0.5); 
                 actionMessage += (i === 0 ? " [Hit 1]" : " [Hit 2]");
             } else if (actionDetails.effect === 'stun') {
                  if (Math.random() < 0.5) {
@@ -832,7 +829,7 @@ async function battle() {
                  showDamagePopup('opponent-fighter', currentHitDamage, false);
             }
             
-            await delay(i > 0 ? 500 : 0); // Kurze Pause bei Multi-Hit
+            await delay(i > 0 ? 500 : 0); 
         }
         
         playerDamage = totalDamage;
@@ -907,7 +904,7 @@ async function battle() {
     document.getElementById('start-battle-button').disabled = false; 
     document.getElementById('open-pack-button').disabled = false; 
     
-    document.getElementById('battle-actions').style.display = 'none'; // Aktionsmenü ausblenden
+    document.getElementById('battle-actions').style.display = 'none'; 
 
     await delay(2000); 
 
@@ -929,7 +926,7 @@ async function battle() {
     updateUI(); 
 }
 
-// Pack-Öffnung und Speicher-Logik (unverändert)
+// Pack-Öffnung und Speicher-Logik
 async function openPack() {
     const packButton = document.getElementById('open-pack-button');
     if (coins < 3) {
@@ -1017,7 +1014,7 @@ function loadGame() {
     collection = loadedCollection;
 
     if (collection.length === 0) {
-        // Starte mit Luca (Heilung) und Franco (Boost)
+        // Starte mit Luca, Franco und Silvia
         collection.push({ id: nextCardId++, name: "Luca", level: 1, xp: 0 });
         collection.push({ id: nextCardId++, name: "Franco", level: 1, xp: 0 });
         collection.push({ id: nextCardId++, name: "Silvia", level: 1, xp: 0 });
@@ -1032,7 +1029,6 @@ function loadGame() {
 
 // 4. UI-MANIPULATION
 function updateUI() {
-    // ... (Logik unverändert, da die Buttons im Kampf nun dynamisch generiert werden)
     document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
     
     const collectionList = document.getElementById('collection-list');
@@ -1157,7 +1153,7 @@ async function handleFightClick() {
     }
     
     const opponentBase = drawCard();
-    opponentCard = getCharacterBaseStats(opponentBase.name); // Gegner kämpft mit Basis-Stats
+    opponentCard = getCharacterBaseStats(opponentBase.name); 
 
     await battle(); 
     updateUI();

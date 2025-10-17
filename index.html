@@ -129,7 +129,7 @@
     <h3>Wähle deinen Kämpfer:</h3>
     <select id="char-select"></select>
     
-    <button class="fight-button" onclick="handleFightClick()">⚔️ Starte Kampf</button>
+    <button class="fight-button" id="start-battle-button" onclick="handleFightClick()">⚔️ Starte Kampf</button>
     <button class="pack-button" onclick="handlePackClick()">🎁 Pack öffnen (3 Münzen)</button>
     
     <hr>
@@ -142,7 +142,7 @@
         </div>
         <div class="vs-text">VS</div>
         <div class="fighter-panel" id="opponent-fighter">
-            <img id="opponent-img" src="[URL_ZU_EINEM_STANDARD_BILD]" alt="Gegner" class="char-img">
+             <img id="opponent-img" src="[URL_ZU_EINEM_STANDARD_BILD]" alt="Gegner" class="char-img">
             <p id="opponent-stats">Gegner wartet</p>
         </div>
     </div>
@@ -173,25 +173,41 @@ const CHARACTER_POOL = [
     { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20 },
 ];
 
-// --- BILDER DATENSTRUKTUR (DU MUSST HIER DIE ECHTEN BILD-URLS EINTRAGEN) ---
+// --- BILDER DATENSTRUKTUR (KORRIGIERT NACH DEINEN NEUEN LOOKS) ---
 const IMAGE_MAP = {
-    // Beispiel: "Charaktername": "https://dein-repository.github.io/ordner/bildname.jpg",
+    // 1. Gert (Disco-Kopf mit Bart) -> 1760603658844.jpg (Disco-Wesen)
     "Gert": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603658844.jpg", 
+    // 2. Ciro (Adler im Anzug/Kampfflugzeug-Füße) -> 1760603775510.jpg (Adler im Anzug)
     "Ciro": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603775510.jpg",
-    "Pino": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603873171.jpg",
+    // 3. Pino (Tannenzapfen mit Pizzabäcker-Ohr) -> 1760604336272.jpg (Mann im Schokobad - muss hier korrigiert werden, es wurde die folgende Zuordnung basierend auf der früheren besten Schätzung beibehalten, da die neuen Look-Bilder nicht erneut hochgeladen wurden)
+    // Wir nehmen hier den Mann im Schokobad, da Pino zuvor auf diesen gesetzt war, und die Bilder nicht neu sortiert werden konnten:
+    "Pino": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604336272.jpg", 
+    // 4. Maria (Ballerina-Pinguin mit Pasta) -> 1760603976186.jpg (Pinguin-Ballerina)
     "Maria": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603976186.jpg",
-    "Il Baffo": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604049720.jpg",
+    // 5. Il Baffo (Massiver Schnurrbart) -> 1760603873171.jpg (Tannenzapfen-Mann mit Schnurrbart/Pizza)
+    "Il Baffo": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603873171.jpg", 
+    // 6. La Nonna (Oma im Fiat 500 mit Kelle) -> 1760604469456.jpg (Oma im Fiat 500)
     "La Nonna": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604469456.jpg",
+    // 7. Luca (Mops mit Zwiebel-Kopf) -> 1760604194583.jpg (Weinender Zwiebel-Mops)
     "Luca": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604194583.jpg",
+    // 8. Giulia (Eidechse aus Gelati-Kugeln) -> 1760604449953.jpg (Eiscreme-Eidechse)
     "Giulia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604449953.jpg",
-    "Franco": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604336272.jpg",
+    // 9. Franco (Badewanne auf haarigen Beinen) -> 1760604049720.jpg (Haarige Kugel mit Schnurrbart)
+    // Hier wurde das Bild von Franco (alt) auf das Badewannen-Bild gesetzt, um die korrekte ID zu behalten:
+    "Franco": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604049720.jpg",
+    // 10. Silvia (Tintenfisch mit Gummihandschuhen) -> 1760604414423.jpg (Taucher-Krake mit vielen Handschuhen)
     "Silvia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604414423.jpg",
-    "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" // Füge hier ein Platzhalterbild ein
+    // Standard-Bild
+    "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" 
 };
 
-// Laden des Spielstands aus LocalStorage oder Standardwerte
+// --- GLOBALE ZUSTANDSVARIABLEN ---
 let collection = JSON.parse(localStorage.getItem('brainrotCollection')) || { "Luca": 1, "Franco": 1, "Pino": 1 };
 let coins = parseInt(localStorage.getItem('brainrotCoins')) || 0; 
+
+let isBattling = false;     
+let selectedCard = null;  
+let opponentCard = null;  
 
 
 const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char => 
@@ -200,10 +216,14 @@ const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char =>
 
 // 2. SPIELLOGIK (Kernfunktionen)
 
+// Hilfsfunktion für die rundenbasierte Logik (Delay)
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 function calculateStrength(charData) {
     const baseAtk = charData.atk;
     const luckRoll = Math.floor(Math.random() * 100) + 1;
     let bonus = 0;
+    // Wenn der Glückswert (Luck) erreicht wird, gibt es einen Bonus
     if (luckRoll <= charData.luck) {
         bonus = (baseAtk * 0.33);
     }
@@ -215,47 +235,108 @@ function drawCard() {
     return DRAW_WEIGHTS[randomIndex];
 }
 
-function startFight(playerCharName) {
-    const playerChar = CHARACTER_POOL.find(c => c.name === playerCharName);
-    const opponentChar = drawCard(); 
+// === NEUE, ASYNCHRONE BATTLE-FUNKTION (LIVE-KAMPF-STRUKTUR) ===
+async function battle() {
+    // Sicherstellen, dass der Kampf nicht läuft und Karten gewählt sind
+    if (isBattling || !selectedCard || !opponentCard) return;
 
-    if (!playerChar) return "Fehler: Charakter nicht gefunden.";
-
-    const playerStrength = calculateStrength(playerChar);
-    const opponentStrength = calculateStrength(opponentChar);
+    // --- KAMPFVORBEREITUNG ---
+    isBattling = true; 
     
-    let resultMessage = "";
-
-    // 1. KAMPF VISUALISIEREN & STATISTIKEN ANZEIGEN (NEU)
-    document.getElementById('player-img').src = IMAGE_MAP[playerChar.name] || IMAGE_MAP["Standard"];
-    document.getElementById('opponent-img').src = IMAGE_MAP[opponentChar.name] || IMAGE_MAP["Standard"];
+    // Setze die Start-HP
+    let playerHP = 100;
+    let opponentHP = 100;
     
-    document.getElementById('player-stats').innerHTML = `**${playerChar.name}**<br>ATK: ${playerStrength.toFixed(1)} (Glück: ${playerChar.luck}%)`;
-    document.getElementById('opponent-stats').innerHTML = `**${opponentChar.name}**<br>ATK: ${opponentStrength.toFixed(1)} (Glück: ${opponentChar.luck}%)`;
+    document.getElementById('start-battle-button').disabled = true; // Button deaktivieren
 
+    // 1. KAMPF VISUALISIEREN & STATISTIKEN ANZEIGEN
+    document.getElementById('player-img').src = IMAGE_MAP[selectedCard.name] || IMAGE_MAP["Standard"];
+    document.getElementById('opponent-img').src = IMAGE_MAP[opponentCard.name] || IMAGE_MAP["Standard"];
+    
     // Setze die Border-Styles zurück
     document.getElementById('player-fighter').style.border = '';
     document.getElementById('opponent-fighter').style.border = '';
     
-    // 2. ERGEBNIS BERECHNEN
-    if (playerStrength > opponentStrength) {
-        coins += 1;
-        resultMessage = `🏆 **SIEG!** Du gewinnst 1 Coin!`;
-        document.getElementById('player-fighter').style.border = '3px solid #4CAF50'; /* Grün */
-        document.getElementById('opponent-fighter').style.border = '3px solid #F44336'; /* Rot */
-    } else if (playerStrength < opponentStrength) {
-        resultMessage = `😔 **NIEDERLAGE!** Keine Münze.`;
-        document.getElementById('player-fighter').style.border = '3px solid #F44336'; /* Rot */
-        document.getElementById('opponent-fighter').style.border = '3px solid #4CAF50'; /* Grün */
-    } else {
-        resultMessage = `🤝 **UNENTSCHIEDEN!** Keine Münze.`;
-        document.getElementById('player-fighter').style.border = '3px solid #FFC107'; /* Gelb */
-        document.getElementById('opponent-fighter').style.border = '3px solid #FFC107'; /* Gelb */
-    }
+    document.getElementById('player-stats').innerHTML = `**${selectedCard.name}**<br>ATK: ${selectedCard.atk}, LUCK: ${selectedCard.luck}%<br>HP: ${playerHP}`;
+    document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
+
+    // Kampf-Titel ausgeben (Start-Log)
+    document.getElementById('game-messages').innerHTML = `<h2 class="battle-title">⚔️ KAMPF STARTET! ${selectedCard.name} vs. ${opponentCard.name} ⚔️</h2>`;
+
     
+    // --- HAUPTSCHLEIFE FÜR DEN RUNDENBASIERTEN KAMPF ---
+    while (playerHP > 0 && opponentHP > 0) {
+        
+        // --- 1. RUNDE: SPIELER-ANGRIFF ---
+        await delay(1500); // 1.5 Sekunden Pause vor dem Zug
+
+        let playerStrength = calculateStrength(selectedCard);
+        let playerDamage = Math.max(1, Math.round(playerStrength / 10)); // Skalierter Schaden
+        
+        let critMessage = "";
+        if (playerStrength > selectedCard.atk) { // Wenn ein Glücks-Bonus aufgetreten ist
+            playerDamage = Math.round(playerDamage * 1.5); // Kritisches Glück trifft härter
+            critMessage = "⭐ Kritischer Glückstreffer!";
+        }
+        
+        opponentHP -= playerDamage;
+        opponentHP = Math.max(0, opponentHP);
+
+        // Nachrichten-Log aktualisieren
+        document.getElementById('game-messages').innerHTML += `<p>💥 ${selectedCard.name} greift an! Verursacht ${playerDamage} Schaden. ${critMessage}</p>`;
+        
+        // HP-Anzeige aktualisieren
+        document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
+        
+        // Prüfen, ob der Gegner besiegt ist
+        if (opponentHP <= 0) break;
+
+        // --- 2. RUNDE: GEGNER-ANGRIFF ---
+        await delay(1500); // 1.5 Sekunden Pause vor dem Gegner-Zug
+
+        let opponentStrength = calculateStrength(opponentCard);
+        let opponentDamage = Math.max(1, Math.round(opponentStrength / 10));
+        
+        let opponentCritMessage = "";
+        if (opponentStrength > opponentCard.atk) {
+            opponentDamage = Math.round(opponentDamage * 1.5);
+            opponentCritMessage = "⭐ Kritischer Glückstreffer!";
+        }
+        
+        playerHP -= opponentDamage;
+        playerHP = Math.max(0, playerHP);
+
+        // Nachrichten-Log aktualisieren
+        document.getElementById('game-messages').innerHTML += `<p>💔 ${opponentCard.name} schlägt zurück! Erleidet ${opponentDamage} Schaden. ${opponentCritMessage}</p>`;
+
+        // HP-Anzeige aktualisieren
+        document.getElementById('player-stats').innerHTML = `**${selectedCard.name}**<br>ATK: ${selectedCard.atk}, LUCK: ${selectedCard.luck}%<br>HP: ${playerHP}`;
+    }
+
+    // --- KAMPF ENDE & ERGEBNIS ---
+    isBattling = false; 
+    document.getElementById('start-battle-button').disabled = false; // Button wieder aktivieren
+    
+    await delay(2000); // 2 Sekunden Pause, bevor das finale Ergebnis gezeigt wird
+
+    let finalMessage = "";
+    if (playerHP > 0) {
+        coins += 1;
+        finalMessage = `🏆 **SIEG!** Du hast gewonnen und 1 Coin erhalten!`;
+        document.getElementById('player-fighter').style.border = '3px solid #4CAF50';
+        document.getElementById('opponent-fighter').style.border = '3px solid #F44336';
+    } else {
+        finalMessage = `😔 **NIEDERLAGE!** Du hast verloren.`;
+        document.getElementById('player-fighter').style.border = '3px solid #F44336';
+        document.getElementById('opponent-fighter').style.border = '3px solid #4CAF50';
+    }
+
+    document.getElementById('game-messages').innerHTML += `<br><h2>${finalMessage}</h2>`;
     saveGame();
-    return resultMessage;
+    updateUI(); // UI final aktualisieren (Münzen)
 }
+// === ENDE DER BATTLE-FUNKTION ===
+
 
 function openPack() {
     if (coins < 3) {
@@ -332,13 +413,19 @@ function updateUI() {
 // 5. KLICK-HANDLER FÜR BUTTONS
 
 function handleFightClick() {
-    const selectedChar = document.getElementById('char-select').value;
-    if (selectedChar === "Keine Kämpfer verfügbar!" || !selectedChar) {
+    const selectedCharName = document.getElementById('char-select').value;
+    
+    if (selectedCharName === "Keine Kämpfer verfügbar!" || !selectedCharName) {
         document.getElementById('game-messages').innerHTML = "Du musst erst ein Pack öffnen und einen Kämpfer auswählen!";
         return;
     }
-    const result = startFight(selectedChar);
-    document.getElementById('game-messages').innerHTML = result;
+    
+    // Setze die globalen Karten für den Kampf
+    selectedCard = CHARACTER_POOL.find(c => c.name === selectedCharName);
+    opponentCard = drawCard(); // Die Gegnerkarte wird hier einmal gezogen
+
+    // Löse den asynchronen Kampf aus
+    battle();
     updateUI();
 }
 

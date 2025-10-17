@@ -43,7 +43,7 @@ body {
     text-align: center;
     margin-bottom: 20px;
 }
-.fight-button, .pack-button {
+.fight-button, .pack-button, .synth-button {
     width: 100%;
     padding: 12px;
     margin-bottom: 10px;
@@ -68,11 +68,18 @@ body {
 .pack-button:hover {
     background-color: #1565c0;
 }
+.synth-button {
+    background-color: #FF9800; /* Orange für Synth */
+    color: white;
+}
+.synth-button:hover {
+    background-color: #FB8C00;
+}
 
-/* NEUE: Button zittern bei Fehler */
+/* Button zittern bei Fehler */
 @keyframes shake-animation {
     0%, 100% { transform: translateX(0); background-color: #1976d2; }
-    20%, 60% { transform: translateX(-5px); background-color: #FF5722; } /* Orange/Rot bei Fehler */
+    20%, 60% { transform: translateX(-5px); background-color: #FF5722; }
     40%, 80% { transform: translateX(5px); background-color: #FF5722; }
 }
 .shake-button {
@@ -96,193 +103,61 @@ body {
     min-height: 50px;
     white-space: pre-wrap;
 }
-#collection-list li {
-    list-style-type: none;
-    padding: 5px 0;
-    border-bottom: 1px dashed #eee;
-}
+/* NEU: Sammlung als Flexbox für Synth-UI */
 #collection-list {
     padding-left: 0;
 }
-
-/* --- KAMPF VISUALISIERUNG --- */
-.fight-container {
+.card-list-item {
+    list-style-type: none;
+    padding: 5px 0;
+    border-bottom: 1px dashed #eee;
     display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
-    margin: 20px 0;
-    text-align: center;
-}
-.fighter-panel {
-    width: 45%;
-    background-color: #eee;
-    padding: 10px;
-    border-radius: 8px;
-    min-height: 250px; 
-    transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-    position: relative; /* Wichtig für Schadens-Popup */
-}
-.char-img {
-    width: 100%; 
-    max-width: 120px;
-    height: auto;
-    border: 3px solid #333;
-    border-radius: 4px;
-    margin-bottom: 5px;
-}
-.vs-text {
-    font-size: 24px;
-    font-weight: bold;
-    color: #d32f2f;
-    line-height: 150px; 
-}
-.fighter-stats-info {
-    font-weight: bold;
-    min-height: 30px;
-    margin: 5px 0 0 0;
-}
-.stats-text {
-    margin-top: 5px;
-}
-
-
-/* NEU: HP-Balken Styling */
-.hp-bar-container {
-    width: 100%;
-    height: 15px;
-    background-color: #f44336; /* Rot als Hintergrund (leere HP) */
-    border-radius: 7px;
-    margin-top: 5px;
-    overflow: hidden;
-}
-.hp-bar-fill {
-    height: 100%;
-    width: 100%; /* Startet bei 100% */
-    background-color: #4CAF50; /* Grün für volle HP */
-    transition: width 0.5s ease-out; /* Sanfte Animation der HP-Reduzierung */
-}
-.low-hp {
-    background-color: #f44336; /* Rot bei niedriger HP */
-}
-
-/* --- CSS-ANIMATIONEN FÜR DEN ANGRIFF (Unverändert) --- */
-@keyframes attack-right {
-    0% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-    50% { transform: translateX(15px); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); }
-    100% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-}
-@keyframes attack-left {
-    0% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-    50% { transform: translateX(-15px); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); }
-    100% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-}
-.fighter-panel.attacking-player { animation: attack-right 0.3s ease-in-out; }
-.fighter-panel.attacking-opponent { animation: attack-left 0.3s ease-in-out; }
-.fighter-panel.hit { animation: shake 0.2s; border-color: #ff0000; }
-@keyframes shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-1deg); }
-  50% { transform: translate(-3px, 0px) rotate(1deg); } 75% { transform: translate(1px, 2px) rotate(0deg); }
-  100% { transform: translate(0px, 0px) rotate(0deg); }
-}
-
-/* NEU: Schadens-Popup Styling */
-.damage-popup {
-    position: absolute;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: red;
-    font-size: 24px;
-    font-weight: bold;
-    text-shadow: 1px 1px 3px black;
-    opacity: 0;
-    animation: floatup 1s forwards;
-    pointer-events: none; /* Klicks durchlassen */
-}
-.damage-popup.crit {
-    color: #ffc107; /* Gold/Gelb für Kritischen Schaden */
-    font-size: 30px;
-}
-@keyframes floatup {
-    0% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, -50px); }
-}
-
-/* --- PACK-ÖFFNUNGS-ANIMATION (Unverändert) --- */
-#pack-opening-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    z-index: 1000; 
-    opacity: 0; 
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out;
 }
-#pack-opening-overlay.active {
-    opacity: 1;
-    visibility: visible;
+.card-list-item strong {
+    flex-grow: 1;
 }
-.card-reveal-container {
-    perspective: 1000px; 
-    width: 180px; 
-    height: 250px;
-    position: relative;
+.card-list-item button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
     cursor: pointer;
 }
-.card-front, .card-back {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    backface-visibility: hidden; 
-    border-radius: 8px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-    transition: transform 0.8s ease-in-out;
-    background-size: cover;
-    background-position: center;
-}
-.card-front {
-    background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png'); 
-    transform: rotateY(0deg);
-}
-.card-back {
-    background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg'); 
-    transform: rotateY(180deg);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end; 
-    align-items: center;
+.select-main {
+    background-color: #4CAF50;
     color: white;
-    text-shadow: 1px 1px 3px black;
-    padding: 10px;
-    box-sizing: border-box;
-    font-size: 14px;
-    text-align: center;
-    font-weight: bold;
 }
-.card-reveal-container.revealed .card-front {
-    transform: rotateY(-180deg);
+.select-sacrifice {
+    background-color: #F44336;
+    color: white;
 }
-.card-reveal-container.revealed .card-back {
-    transform: rotateY(0deg);
-}
-#revealed-card-info {
-    position: absolute;
-    bottom: 10px;
-    width: 100%;
-    text-align: center;
-    padding: 0 5px;
-    box-sizing: border-box;
-    background-color: rgba(0,0,0,0.4); 
-    border-radius: 0 0 8px 8px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
+
+/* --- KAMPF VISUALISIERUNG (Unverändert) --- */
+.fight-container { display: flex; justify-content: space-around; align-items: flex-start; margin: 20px 0; text-align: center; }
+.fighter-panel { width: 45%; background-color: #eee; padding: 10px; border-radius: 8px; min-height: 250px; position: relative; }
+.char-img { width: 100%; max-width: 120px; height: auto; border: 3px solid #333; border-radius: 4px; margin-bottom: 5px; }
+.vs-text { font-size: 24px; font-weight: bold; color: #d32f2f; line-height: 150px; }
+.fighter-stats-info { font-weight: bold; min-height: 30px; margin: 5px 0 0 0; }
+.stats-text { margin-top: 5px; }
+.hp-bar-container { width: 100%; height: 15px; background-color: #f44336; border-radius: 7px; margin-top: 5px; overflow: hidden; }
+.hp-bar-fill { height: 100%; width: 100%; background-color: #4CAF50; transition: width 0.5s ease-out; }
+.low-hp { background-color: #f44336; }
+.damage-popup { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); color: red; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 3px black; opacity: 0; animation: floatup 1s forwards; pointer-events: none; }
+.damage-popup.crit { color: #ffc107; font-size: 30px; }
+@keyframes floatup { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
+
+/* --- PACK-ÖFFNUNGS-ANIMATION (Unverändert) --- */
+#pack-opening-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out; }
+#pack-opening-overlay.active { opacity: 1; visibility: visible; }
+.card-reveal-container { perspective: 1000px; width: 180px; height: 250px; position: relative; cursor: pointer; }
+.card-front, .card-back { width: 100%; height: 100%; position: absolute; backface-visibility: hidden; border-radius: 8px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); transition: transform 0.8s ease-in-out; background-size: cover; background-position: center; }
+.card-front { background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png'); transform: rotateY(0deg); }
+.card-back { background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg'); transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; color: white; text-shadow: 1px 1px 3px black; padding: 10px; box-sizing: border-box; font-size: 14px; text-align: center; font-weight: bold; }
+.card-reveal-container.revealed .card-front { transform: rotateY(-180deg); }
+.card-reveal-container.revealed .card-back { transform: rotateY(0deg); }
+#revealed-card-info { position: absolute; bottom: 10px; width: 100%; text-align: center; padding: 0 5px; box-sizing: border-box; background-color: rgba(0,0,0,0.4); border-radius: 0 0 8px 8px; padding-top: 5px; padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -326,6 +201,19 @@ body {
     <h3>Nachrichten:</h3>
     <div id="game-messages">Willkommen in Italien! Wähle deinen Brainrot!</div>
     
+    <hr>
+    
+    <h3>Fusions-System (Synth)</h3>
+    <p>Wähle eine **Hauptkarte** (grün) und eine **Opferkarte** (rot) des gleichen Charakters aus der Sammlung, um die Hauptkarte zu leveln.</p>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <span id="synth-status">Bereit zum Synthetisieren.</span>
+    </div>
+    <div style="display: flex; justify-content: space-around; margin-bottom: 15px;">
+        <span id="synth-main-card">Hauptkarte: Keine</span>
+        <span id="synth-sacrifice-card">Opferkarte: Keine</span>
+    </div>
+    <button class="synth-button" id="start-synth-button" onclick="handleSynthClick()" disabled>🔥 Jetzt fusionieren!</button>
+
     <hr>
     
     <h3>Deine Sammlung:</h3>
@@ -376,98 +264,155 @@ const IMAGE_MAP = {
 };
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
-let collection = JSON.parse(localStorage.getItem('brainrotCollection')) || { "Luca": 1, "Franco": 1, "Pino": 1 };
+// NEU: Collection ist jetzt ein Array von Kartenobjekten
+let collection = JSON.parse(localStorage.getItem('brainrotCollection')) || [
+    { id: 1, name: "Luca", level: 1, xp: 0 },
+    { id: 2, name: "Franco", level: 1, xp: 0 },
+    { id: 3, name: "Pino", level: 1, xp: 0 }
+];
 let coins = parseInt(localStorage.getItem('brainrotCoins')) || 0; 
+let nextCardId = parseInt(localStorage.getItem('brainrotNextCardId')) || 4; // Zähler für neue Karten-IDs
 
 let isBattling = false;     
-let selectedCard = null;  
+let selectedCard = null;  // Beinhaltet jetzt das volle Kartenobjekt aus der collection
 let opponentCard = null;  
+
+// Synth-State
+let synthMainCardId = null;
+let synthSacrificeCardId = null;
 
 
 const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char => 
     Array(char.weight).fill(char)
 );
+const XP_PER_LEVEL = 100; // XP benötigt für das nächste Level
+const XP_PER_WIN = 30;    // XP erhalten pro gewonnenem Kampf
+
 
 // 2. SPIELLOGIK (Kernfunktionen)
 
 // Hilfsfunktion für die rundenbasierte Logik (Delay)
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// --- NEUE FUNKTION FÜR SCHADENS-POPUP ---
-function showDamagePopup(elementId, damage, isCrit) {
-    const fighterPanel = document.getElementById(elementId);
-    const popup = document.createElement('div');
-    popup.textContent = `-${damage}`;
-    popup.classList.add('damage-popup');
-    if (isCrit) {
-        popup.classList.add('crit');
-        popup.textContent = `💥 -${damage}!`;
+
+// NEUE FUNKTION: Basiswerte der Karte abrufen
+function getCharacterBaseStats(name) {
+    return CHARACTER_POOL.find(c => c.name === name);
+}
+
+// NEUE FUNKTION: Aktuelle Werte basierend auf Level berechnen
+function getCharacterCurrentStats(card) {
+    const baseStats = getCharacterBaseStats(card.name);
+    if (!baseStats) return null;
+
+    // Berechnung des Bonus: Pro Level 5% der Basis-ATK und 2% der Basis-LUCK
+    const levelBonus = card.level - 1;
+    const atkBonus = Math.round(baseStats.atk * 0.05 * levelBonus);
+    const luckBonus = Math.round(baseStats.luck * 0.02 * levelBonus);
+    
+    return {
+        name: card.name,
+        atk: baseStats.atk + atkBonus,
+        luck: Math.min(100, baseStats.luck + luckBonus), // Luck max. 100
+        rarity: baseStats.rarity,
+        level: card.level,
+        xp: card.xp
+    };
+}
+
+// NEUE FUNKTION: XP erhalten und Level-Up prüfen
+function gainXP(cardId, xp) {
+    const card = collection.find(c => c.id === cardId);
+    if (!card) return;
+
+    card.xp += xp;
+    
+    let leveledUp = false;
+    while (card.xp >= XP_PER_LEVEL * card.level && card.level < 10) { // Max Level 10
+        card.xp -= XP_PER_LEVEL * card.level; // XP für das aktuelle Level abziehen
+        card.level += 1;
+        leveledUp = true;
     }
     
-    // Zufällige x-Position leicht links oder rechts von der Mitte
-    const randomX = Math.random() * 20 - 10; // -10 bis 10
-    popup.style.transform = `translate(calc(-50% + ${randomX}px), 0)`;
-
-    fighterPanel.appendChild(popup);
-    
-    // Entferne das Popup nach der Animation (1s)
-    setTimeout(() => {
-        fighterPanel.removeChild(popup);
-    }, 1000);
-}
-
-// --- NEUE FUNKTION FÜR HP-BALKEN-UPDATE ---
-function updateHPBar(hpFillId, currentHP) {
-    const hpFill = document.getElementById(hpFillId);
-    const percentage = Math.max(0, currentHP);
-    hpFill.style.width = `${percentage}%`;
-    
-    // Farbe ändern bei niedriger HP
-    if (percentage <= 25) {
-        hpFill.classList.add('low-hp');
-    } else {
-        hpFill.classList.remove('low-hp');
+    if (leveledUp) {
+        document.getElementById('game-messages').innerHTML += `<br>🎉 **${card.name}** ist auf Level **${card.level}** aufgestiegen!`;
+        const newStats = getCharacterCurrentStats(card);
+        document.getElementById('game-messages').innerHTML += `<br>Neue ATK: ${newStats.atk}, Neue LUCK: ${newStats.luck}%`;
     }
+    saveGame();
 }
 
-// --- NEUE FUNKTION FÜR DIE KAMPF-ANIMATION (Unverändert) ---
-function animateAttack(attackerElementId, defenderElementId) {
-    return new Promise(resolve => {
-        const attacker = document.getElementById(attackerElementId);
-        const defender = document.getElementById(defenderElementId);
-        
-        attacker.classList.add(`attacking-${attackerElementId.split('-')[0]}`);
-        defender.classList.add('hit'); 
-        
-        function handleAnimationEnd() {
-            attacker.classList.remove(`attacking-${attackerElementId.split('-')[0]}`);
-            defender.classList.remove('hit');
-            attacker.removeEventListener('animationend', handleAnimationEnd);
-            resolve();
-        }
-        
-        attacker.addEventListener('animationend', handleAnimationEnd);
-    });
-}
+// NEUE FUNKTION: Fusions-Logik
+function synthCharacter(mainCardId, sacrificeCardId) {
+    const mainCard = collection.find(c => c.id === mainCardId);
+    const sacrificeCardIndex = collection.findIndex(c => c.id === sacrificeCardId);
 
-
-function calculateStrength(charData) {
-    const baseAtk = charData.atk;
-    const luckRoll = Math.floor(Math.random() * 100) + 1;
-    let bonus = 0;
-    if (luckRoll <= charData.luck) {
-        bonus = (baseAtk * 0.33);
+    if (!mainCard || sacrificeCardIndex === -1) {
+        return "FEHLER: Karten nicht gefunden.";
     }
-    return baseAtk + bonus;
+    if (mainCard.name !== collection[sacrificeCardIndex].name) {
+        return "FEHLER: Karten müssen vom gleichen Charakter sein.";
+    }
+    if (mainCard.level >= 10) {
+         return "FEHLER: Diese Karte hat bereits das maximale Level (10) erreicht.";
+    }
+
+    // Die Opferkarte gibt XP basierend auf ihrer Seltenheit (vereinfacht)
+    // Gewöhnlich: 50 XP, Ungewöhnlich: 100 XP, Selten: 150 XP, Episch: 200 XP, Legendär: 300 XP
+    const rarity = getCharacterBaseStats(mainCard.name).rarity;
+    let baseXP = 50;
+    if (rarity === "Ungewöhnlich") baseXP = 100;
+    else if (rarity === "Selten") baseXP = 150;
+    else if (rarity === "Episch") baseXP = 200;
+    else if (rarity === "Legendär") baseXP = 300;
+    
+    const xpGained = baseXP;
+
+    // 1. Opferkarte aus der Sammlung entfernen
+    collection.splice(sacrificeCardIndex, 1);
+    
+    // 2. Hauptkarte erhält XP (prüft auf Level-Up)
+    const oldLevel = mainCard.level;
+    mainCard.xp += xpGained;
+
+    // Level-Up-Logik prüfen
+    let levelUps = 0;
+    while (mainCard.xp >= XP_PER_LEVEL * mainCard.level && mainCard.level < 10) { 
+        mainCard.xp -= XP_PER_LEVEL * mainCard.level; 
+        mainCard.level += 1;
+        levelUps++;
+    }
+    
+    // 3. Status zurücksetzen und speichern
+    synthMainCardId = null;
+    synthSacrificeCardId = null;
+    saveGame();
+
+    const newStats = getCharacterCurrentStats(mainCard);
+    
+    let message = `🔥 **${mainCard.name}** fusioniert! Erhielt ${xpGained} XP. (XP: ${mainCard.xp}/${XP_PER_LEVEL * mainCard.level})`;
+    if (levelUps > 0) {
+        message += `<br>🎉 AUFSTIEG auf Level **${mainCard.level}**! Neue ATK: ${newStats.atk}, LUCK: ${newStats.luck}%`;
+    }
+    return message;
 }
+
 
 function drawCard() {
-    const randomIndex = Math.floor(Math.random() * DRAW_WEIGHTS.length);
-    return DRAW_WEIGHTS[randomIndex];
+    const baseCard = DRAW_WEIGHTS[Math.floor(Math.random() * DRAW_WEIGHTS.length)];
+    // NEU: Neue Karten erhalten Startwerte
+    const newCard = {
+        id: nextCardId++,
+        name: baseCard.name,
+        level: 1,
+        xp: 0
+    };
+    return newCard;
 }
 
-// === ASYNCHRONE BATTLE-FUNKTION (MIT HP-BALKEN & SCHADENS-POPUP) ===
+// === ASYNCHRONE BATTLE-FUNKTION (Aktualisiert für Level-System) ===
 async function battle() {
+    // SelectedCard ist nun das Kartenobjekt aus der Collection
     if (isBattling || !selectedCard || !opponentCard) return;
 
     isBattling = true; 
@@ -478,6 +423,9 @@ async function battle() {
     document.getElementById('start-battle-button').disabled = true;
     document.getElementById('open-pack-button').disabled = true;
 
+    // Aktuelle Kampf-Werte des Spielers basierend auf Level
+    const playerStats = getCharacterCurrentStats(selectedCard);
+    
     // KAMPF VISUALISIERUNG START
     document.getElementById('player-img').src = IMAGE_MAP[selectedCard.name] || IMAGE_MAP["Standard"];
     document.getElementById('opponent-img').src = IMAGE_MAP[opponentCard.name] || IMAGE_MAP["Standard"];
@@ -485,14 +433,14 @@ async function battle() {
     document.getElementById('player-fighter').style.border = '';
     document.getElementById('opponent-fighter').style.border = '';
     
-    // Initiales HP-Update
-    document.getElementById('player-stats').innerHTML = `**${selectedCard.name}**<br>ATK: ${selectedCard.atk}, LUCK: ${selectedCard.luck}%<br>HP: ${playerHP}`;
+    // Initiales HP-Update mit Level-Anzeige
+    document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
     document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
     updateHPBar('player-hp-fill', playerHP);
     updateHPBar('opponent-hp-fill', opponentHP);
 
 
-    document.getElementById('game-messages').innerHTML = `<h2 class="battle-title">⚔️ KAMPF STARTET! ${selectedCard.name} vs. ${opponentCard.name} ⚔️</h2>`;
+    document.getElementById('game-messages').innerHTML = `<h2 class="battle-title">⚔️ KAMPF STARTET! ${playerStats.name} (Lv. ${playerStats.level}) vs. ${opponentCard.name} ⚔️</h2>`;
 
     
     // --- HAUPTSCHLEIFE FÜR DEN RUNDENBASIERTEN KAMPF ---
@@ -502,12 +450,12 @@ async function battle() {
         
         await animateAttack('player-fighter', 'opponent-fighter');
         
-        let playerStrength = calculateStrength(selectedCard);
+        let playerStrength = calculateStrength(playerStats); // Nutzt Level-Werte
         let playerDamage = Math.max(1, Math.round(playerStrength / 10)); 
         let isPlayerCrit = false;
         
         let critMessage = "";
-        if (playerStrength > selectedCard.atk) { 
+        if (playerStrength > playerStats.atk) { 
             playerDamage = Math.round(playerDamage * 1.5); 
             critMessage = "⭐ Kritischer Glückstreffer!";
             isPlayerCrit = true;
@@ -516,12 +464,10 @@ async function battle() {
         opponentHP -= playerDamage;
         opponentHP = Math.max(0, opponentHP);
 
-        // NEU: Schadens-Popup anzeigen
         showDamagePopup('opponent-fighter', playerDamage, isPlayerCrit);
         
-        document.getElementById('game-messages').innerHTML += `<p>💥 ${selectedCard.name} greift an! Verursacht ${playerDamage} Schaden. ${critMessage}</p>`;
+        document.getElementById('game-messages').innerHTML += `<p>💥 ${playerStats.name} greift an! Verursacht ${playerDamage} Schaden. ${critMessage}</p>`;
         
-        // NEU: HP-Balken und Text aktualisieren
         document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
         updateHPBar('opponent-hp-fill', opponentHP);
         
@@ -546,13 +492,11 @@ async function battle() {
         playerHP -= opponentDamage;
         playerHP = Math.max(0, playerHP);
         
-        // NEU: Schadens-Popup anzeigen
         showDamagePopup('player-fighter', opponentDamage, isOpponentCrit);
 
         document.getElementById('game-messages').innerHTML += `<p>💔 ${opponentCard.name} schlägt zurück! Erleidet ${opponentDamage} Schaden. ${opponentCritMessage}</p>`;
 
-        // NEU: HP-Balken und Text aktualisieren
-        document.getElementById('player-stats').innerHTML = `**${selectedCard.name}**<br>ATK: ${selectedCard.atk}, LUCK: ${selectedCard.luck}%<br>HP: ${playerHP}`;
+        document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
         updateHPBar('player-hp-fill', playerHP);
     }
 
@@ -566,7 +510,8 @@ async function battle() {
     let finalMessage = "";
     if (playerHP > 0) {
         coins += 1;
-        finalMessage = `🏆 **SIEG!** Du hast gewonnen und 1 Coin erhalten!`;
+        gainXP(selectedCard.id, XP_PER_WIN); // NEU: XP für den Spielercharakter
+        finalMessage = `🏆 **SIEG!** Du hast gewonnen, 1 Coin und ${XP_PER_WIN} XP erhalten!`;
         document.getElementById('player-fighter').style.border = '3px solid #4CAF50';
         document.getElementById('opponent-fighter').style.border = '3px solid #F44336';
     } else {
@@ -582,36 +527,34 @@ async function battle() {
 // === ENDE DER BATTLE-FUNKTION ===
 
 
-// --- NEUE ASYNCHRONE openPack Funktion (mit Fehler-Feedback) ---
+// --- Pack-Öffnung (mit neuer Datenstruktur) ---
 async function openPack() {
     const packButton = document.getElementById('open-pack-button');
     if (coins < 3) {
         document.getElementById('game-messages').innerHTML = "FEHLER: Du brauchst 3 Münzen!";
-        
-        // NEU: Button zittern lassen
         packButton.classList.add('shake-button');
-        await delay(400); // Warten auf das Ende der Shake-Animation
+        await delay(400); 
         packButton.classList.remove('shake-button');
         return;
     }
 
-    // Buttons deaktivieren
     packButton.disabled = true;
     document.getElementById('start-battle-button').disabled = true;
 
     coins -= 3;
+    const newCard = drawCard(); // Die neue Karte ist jetzt ein Objekt {id, name, level, xp}
+    collection.push(newCard); // Füge das Objekt zur Collection hinzu
+    
     saveGame(); 
     updateUI(); 
     
-    const newCard = drawCard();
-    collection[newCard.name] = (collection[newCard.name] || 0) + 1;
+    const baseStats = getCharacterBaseStats(newCard.name);
 
     const overlay = document.getElementById('pack-opening-overlay');
     const cardRevealContainer = document.getElementById('card-reveal-container');
     const revealedCardImage = document.getElementById('revealed-card-image');
     const revealedCardInfo = document.getElementById('revealed-card-info');
 
-    // Overlay anzeigen und Pack-Rückseite einstellen
     overlay.classList.add('active');
     cardRevealContainer.classList.remove('revealed'); 
     revealedCardImage.style.backgroundImage = `url('${IMAGE_MAP[newCard.name] || IMAGE_MAP["Standard"]}')`;
@@ -619,24 +562,20 @@ async function openPack() {
 
     await delay(500); 
 
-    // Karte umdrehen
     cardRevealContainer.classList.add('revealed');
     
     await delay(1000); 
 
-    // Details der Karte anzeigen
     revealedCardInfo.innerHTML = `
-        <strong>${newCard.name}</strong><br>
-        (${newCard.rarity})<br>
-        ATK: ${newCard.atk}, LUCK: ${newCard.luck}%
+        **${newCard.name}** (ID: ${newCard.id})<br>
+        (${baseStats.rarity})<br>
+        ATK: ${baseStats.atk}, LUCK: ${baseStats.luck}%
     `;
 
-    document.getElementById('game-messages').innerHTML = `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${newCard.rarity})!`;
+    document.getElementById('game-messages').innerHTML = `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${baseStats.rarity})!`;
     
-    // Auf Klick warten, um Overlay zu schließen
     await new Promise(resolve => {
         overlay.onclick = (e) => {
-            // Sicherstellen, dass nur ein Klick auf das Overlay (und nicht die Karte selbst) schließt
             if (e.target === overlay) {
                 overlay.classList.remove('active');
                 overlay.onclick = null; 
@@ -645,7 +584,6 @@ async function openPack() {
         };
     });
     
-    // Buttons wieder aktivieren
     packButton.disabled = false;
     document.getElementById('start-battle-button').disabled = false;
 
@@ -658,6 +596,7 @@ async function openPack() {
 function saveGame() {
     localStorage.setItem('brainrotCoins', coins);
     localStorage.setItem('brainrotCollection', JSON.stringify(collection));
+    localStorage.setItem('brainrotNextCardId', nextCardId);
 }
 
 
@@ -667,64 +606,128 @@ function updateUI() {
     // 1. Münzen aktualisieren
     document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
     
-    // 2. Sammlung aktualisieren
+    // 2. Sammlung aktualisieren (DEUTLICH KOMPLEXER JETZT)
     const collectionList = document.getElementById('collection-list');
     collectionList.innerHTML = ''; 
     
-    const sortedCollection = Object.keys(collection)
-        .filter(name => collection[name] > 0)
-        .map(name => {
-            const charData = CHARACTER_POOL.find(c => c.name === name);
-            return { name, count: collection[name], charData };
-        })
-        .sort((a, b) => b.charData.atk - a.charData.atk);
+    // Sortiere nach Name und Level
+    const sortedCollection = [...collection].sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return b.level - a.level; // Innerhalb des Namens nach Level absteigend
+    });
 
-    sortedCollection.forEach(({ name, count, charData }) => {
+    sortedCollection.forEach(card => {
+        const currentStats = getCharacterCurrentStats(card);
+        const baseStats = getCharacterBaseStats(card.name);
+
         const li = document.createElement('li');
         li.className = 'card-list-item';
-        li.innerHTML = `<strong>${count}x ${name}</strong> (${charData.rarity}) - ATK: ${charData.atk}, LUCK: ${charData.luck}%`;
+        
+        li.innerHTML = `
+            <div>
+                <strong>${card.name}</strong> (Lv. ${card.level}) (ID: ${card.id}) - ${baseStats.rarity}<br>
+                ATK: ${currentStats.atk}, LUCK: ${currentStats.luck}% | XP: ${card.xp}/${XP_PER_LEVEL * card.level}
+            </div>
+            <div>
+                <button class="select-main" onclick="setSynthMain(${card.id})">Haupt</button>
+                <button class="select-sacrifice" onclick="setSynthSacrifice(${card.id})">Opfer</button>
+            </div>
+        `;
         collectionList.appendChild(li);
     });
     
-    // 3. Auswahlfeld aktualisieren
+    // 3. Auswahlfeld für den Kampf aktualisieren (Nur Karten Level 1+ wählen)
     const charSelect = document.getElementById('char-select');
-    const selectedValue = charSelect.value;
+    const selectedId = charSelect.value;
     charSelect.innerHTML = '';
 
-    const ownedChars = Object.keys(collection).filter(name => collection[name] > 0);
+    const selectableCards = collection.filter(card => card.level > 0);
     
-    if (ownedChars.length === 0) {
+    if (selectableCards.length === 0) {
         const option = document.createElement('option');
         option.textContent = "Keine Kämpfer verfügbar!";
         charSelect.appendChild(option);
     } else {
-        ownedChars.forEach(name => {
+        selectableCards.forEach(card => {
+            const stats = getCharacterCurrentStats(card);
             const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            if (name === selectedValue) {
+            option.value = card.id;
+            option.textContent = `${card.name} (Lv. ${card.level}) - ATK: ${stats.atk}`;
+            if (String(card.id) === selectedId) {
                 option.selected = true;
             }
             charSelect.appendChild(option);
         });
-        if (!ownedChars.includes(selectedValue) && ownedChars.length > 0) {
-             charSelect.value = ownedChars[0];
-        }
+        // Setze selectedCard auf das ausgewählte Objekt
+        const currentSelectionId = parseInt(charSelect.value);
+        selectedCard = collection.find(c => c.id === currentSelectionId) || selectableCards[0];
     }
+
+    // 4. Synth-Status aktualisieren
+    updateSynthUI();
 }
 
-// 5. KLICK-HANDLER FÜR BUTTONS
+function updateSynthUI() {
+    const mainCard = collection.find(c => c.id === synthMainCardId);
+    const sacrificeCard = collection.find(c => c.id === synthSacrificeCardId);
+    const synthButton = document.getElementById('start-synth-button');
+    const status = document.getElementById('synth-status');
+
+    document.getElementById('synth-main-card').textContent = `Hauptkarte: ${mainCard ? mainCard.name + ' (Lv. ' + mainCard.level + ')' : 'Keine'}`;
+    document.getElementById('synth-sacrifice-card').textContent = `Opferkarte: ${sacrificeCard ? sacrificeCard.name + ' (Lv. ' + sacrificeCard.level + ')' : 'Keine'}`;
+
+    let canSynth = false;
+    if (mainCard && sacrificeCard) {
+        if (mainCard.id === sacrificeCard.id) {
+            status.textContent = "FEHLER: Haupt- und Opferkarte müssen unterschiedlich sein!";
+        } else if (mainCard.name !== sacrificeCard.name) {
+            status.textContent = "FEHLER: Karten müssen vom gleichen Charakter sein!";
+        } else if (mainCard.level >= 10) {
+            status.textContent = "FEHLER: Hauptkarte hat Max-Level erreicht (10)!";
+        } else {
+            const baseXP = getCharacterBaseStats(mainCard.name).rarity === "Legendär" ? 300 : 50; // Vereinfachte XP-Anzeige
+            status.textContent = `Bereit! ${mainCard.name} erhält ~${baseXP} XP.`;
+            canSynth = true;
+        }
+    } else {
+        status.textContent = "Wähle Haupt- und Opferkarte.";
+    }
+
+    synthButton.disabled = !canSynth;
+}
+
+// 5. KLICK-HANDLER FÜR BUTTONS und SYNTH
+
+function setSynthMain(cardId) {
+    synthMainCardId = cardId;
+    updateSynthUI();
+}
+
+function setSynthSacrifice(cardId) {
+    synthSacrificeCardId = cardId;
+    updateSynthUI();
+}
+
+function handleSynthClick() {
+    const message = synthCharacter(synthMainCardId, synthSacrificeCardId);
+    document.getElementById('game-messages').innerHTML = `<h2>${message}</h2>`;
+    updateUI();
+}
+
 
 async function handleFightClick() {
-    const selectedCharName = document.getElementById('char-select').value;
+    const selectedId = parseInt(document.getElementById('char-select').value);
+    selectedCard = collection.find(c => c.id === selectedId);
     
-    if (selectedCharName === "Keine Kämpfer verfügbar!" || !selectedCharName) {
-        document.getElementById('game-messages').innerHTML = "Du musst erst ein Pack öffnen und einen Kämpfer auswählen!";
+    if (!selectedCard) {
+        document.getElementById('game-messages').innerHTML = "Du musst einen Kämpfer auswählen!";
         return;
     }
     
-    selectedCard = CHARACTER_POOL.find(c => c.name === selectedCharName);
-    opponentCard = drawCard(); 
+    // Gegner ist immer eine zufällige Basis-Karte (kein Level-System für Gegner)
+    const opponentBase = drawCard();
+    opponentCard = getCharacterBaseStats(opponentBase.name);
 
     await battle(); 
     updateUI();
@@ -735,7 +738,15 @@ async function handlePackClick() {
 }
 
 // Initialer Aufruf, wenn die Seite geladen wird
-window.onload = updateUI;
+window.onload = () => {
+    // Initialisiere selectedCard beim Laden, falls Karten existieren
+    const initialSelect = document.getElementById('char-select');
+    if (initialSelect.options.length > 0) {
+        const currentSelectionId = parseInt(initialSelect.value);
+        selectedCard = collection.find(c => c.id === currentSelectionId);
+    }
+    updateUI();
+};
 
 // --- ENDE DES JAVASCRIPT CODES ---
 </script>

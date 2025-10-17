@@ -17,7 +17,7 @@ body {
 }
 .brainrot-game {
     padding: 25px;
-    max-width: 600px;
+    max-width: 750px; /* Weiter vergrößert für die detaillierten Buttons */
     width: 90%; 
     margin: 20px auto;
     border: 3px solid #d32f2f; 
@@ -69,7 +69,7 @@ body {
     background-color: #1565c0;
 }
 .synth-button {
-    background-color: #FF9800; /* Orange für Synth */
+    background-color: #FF9800;
     color: white;
 }
 .synth-button:hover {
@@ -103,40 +103,26 @@ body {
     min-height: 50px;
     white-space: pre-wrap;
 }
-/* NEU: Sammlung als Flexbox für Synth-UI */
-#collection-list {
-    padding-left: 0;
-}
-.card-list-item {
-    list-style-type: none;
-    padding: 5px 0;
-    border-bottom: 1px dashed #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.card-list-item strong {
-    flex-grow: 1;
-}
-.card-list-item button {
-    margin-left: 10px;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-}
-.select-main {
-    background-color: #4CAF50;
-    color: white;
-}
-.select-sacrifice {
-    background-color: #F44336;
-    color: white;
-}
 
 /* --- KAMPF VISUALISIERUNG --- */
-.fight-container { display: flex; justify-content: space-around; align-items: flex-start; margin: 20px 0; text-align: center; }
-.fighter-panel { width: 45%; background-color: #eee; padding: 10px; border-radius: 8px; min-height: 250px; position: relative; transition: all 0.3s; }
+.fight-container { 
+    display: flex; 
+    justify-content: space-around; 
+    align-items: flex-start; 
+    margin: 20px 0; 
+    text-align: center; 
+}
+.fighter-panel { 
+    width: 45%; 
+    background-color: #eee; 
+    padding: 10px; 
+    border-radius: 8px; 
+    min-height: 250px; 
+    position: relative; 
+    transition: all 0.3s; 
+}
+
+/* HP BAR ETC. (Unverändert) */
 .char-img { width: 100%; max-width: 120px; height: auto; border: 3px solid #333; border-radius: 4px; margin-bottom: 5px; }
 .vs-text { font-size: 24px; font-weight: bold; color: #d32f2f; line-height: 150px; }
 .fighter-stats-info { font-weight: bold; min-height: 30px; margin: 5px 0 0 0; }
@@ -148,33 +134,77 @@ body {
 .damage-popup.crit { color: #ffc107; font-size: 30px; }
 @keyframes floatup { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
 
-/* --- KORRIGIERTE CSS-ANIMATIONEN FÜR DEN ANGRIFF --- */
-@keyframes attack-right {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(15px) scale(1.05); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); }
-    100% { transform: translateX(0); }
+/* KAMPF ANIMATIONEN (Unverändert) */
+@keyframes attack-right { 0% { transform: translateX(0); } 50% { transform: translateX(15px) scale(1.05); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); } 100% { transform: translateX(0); } }
+@keyframes attack-left { 0% { transform: translateX(0); } 50% { transform: translateX(-15px) scale(1.05); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); } 100% { transform: translateX(0); } }
+@keyframes hit-effect { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); background-color: #ffcccc; } }
+.fighter-panel.attacking-player { animation: attack-right 0.3s ease-in-out; }
+.fighter-panel.attacking-opponent { animation: attack-left 0.3s ease-in-out; }
+.fighter-panel.hit { animation: hit-effect 0.3s ease-in-out; }
+
+/* NEU: AKTIONSMENÜ */
+#battle-actions {
+    display: none; /* Standardmäßig versteckt */
+    justify-content: space-around;
+    padding: 10px;
+    margin-top: 15px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #f9f9f9;
 }
-@keyframes attack-left {
-    0% { transform: translateX(0); }
-    50% { transform: translateX(-15px) scale(1.05); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); }
-    100% { transform: translateX(0); }
+#battle-actions button {
+    padding: 10px 8px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s, opacity 0.2s;
+    width: 31%;
+    text-align: center;
+    font-size: 14px;
+    height: 60px; /* Feste Höhe für gleiche Größe */
+    position: relative;
+    box-sizing: border-box;
 }
-@keyframes hit-effect {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(0.95); background-color: #ffcccc; }
+#battle-actions button:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+#battle-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #d8d8d8 !important;
+    color: #555 !important;
 }
 
-.fighter-panel.attacking-player { 
-    animation: attack-right 0.3s ease-in-out; 
+/* Cooldown Anzeige */
+.cooldown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    border-radius: 4px;
 }
-.fighter-panel.attacking-opponent { 
-    animation: attack-left 0.3s ease-in-out; 
-}
-.fighter-panel.hit {
-    animation: hit-effect 0.3s ease-in-out;
-}
-/* --- ENDE KAMPF CSS --- */
 
+/* Button Farbklassen */
+.action-base { background-color: #1976d2; color: white; }
+.action-special1 { background-color: #FF5722; color: white; }
+.action-special2 { background-color: #4CAF50; color: white; }
+
+/* --- Sammlung und Synth CSS (Unverändert) --- */
+#collection-list { padding-left: 0; }
+.card-list-item { list-style-type: none; padding: 5px 0; border-bottom: 1px dashed #eee; display: flex; justify-content: space-between; align-items: center; }
+.card-list-item strong { flex-grow: 1; }
+.card-list-item button { margin-left: 10px; padding: 5px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+.select-main { background-color: #4CAF50; color: white; }
+.select-sacrifice { background-color: #F44336; color: white; }
 
 /* --- PACK-ÖFFNUNGS-ANIMATION (Unverändert) --- */
 #pack-opening-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out; }
@@ -226,6 +256,9 @@ body {
         </div>
     </div>
     
+    <div id="battle-actions">
+        </div>
+
     <h3>Nachrichten:</h3>
     <div id="game-messages">Willkommen in Italien! Wähle deinen Brainrot!</div>
     
@@ -262,20 +295,62 @@ body {
 // --- START DES JAVASCRIPT CODES ---
 
 // 1. SPIELDATEN
+// NEU: Fähigkeits-Datenstruktur hinzugefügt
 const CHARACTER_POOL = [
-    { name: "Gert", atk: 50, luck: 70, rarity: "Legendär", weight: 2 },
-    { name: "Ciro", atk: 80, luck: 30, rarity: "Episch", weight: 5 },
-    { name: "Pino", atk: 65, luck: 55, rarity: "Selten", weight: 10 },
-    { name: "Maria", atk: 40, luck: 80, rarity: "Selten", weight: 10 },
-    { name: "Il Baffo", atk: 75, luck: 45, rarity: "Ungewöhnlich", weight: 15 },
-    { name: "La Nonna", atk: 35, luck: 90, rarity: "Ungewöhnlich", weight: 15 },
-    { name: "Luca", atk: 50, luck: 60, rarity: "Gewöhnlich", weight: 20 },
-    { name: "Giulia", atk: 45, luck: 65, rarity: "Gewöhnlich", weight: 20 },
-    { name: "Franco", atk: 60, luck: 50, rarity: "Gewöhnlich", weight: 20 },
-    { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20 },
+    { name: "Gert", atk: 50, luck: 70, rarity: "Legendär", weight: 2, abilities: {
+        'base': { name: "Mano-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Doppelter Wetteinsatz", desc: "Basis + 50% Chance auf doppelten Angriff in der nächsten Runde. (CD: 2)", effect: 'doubleNextTurn', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Barriere di Nonna", desc: "Geringerer Schaden in diesem Zug, aber +40% Schild gegen nächsten Gegner-Angriff. (CD: 3)", effect: 'shield40', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Ciro", atk: 80, luck: 30, rarity: "Episch", weight: 5, abilities: {
+        'base': { name: "Basis-Streich", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Aggressivo", desc: "Erheblich erhöhter Schaden. Eigene Verteidigung wird für 1 Zug ignoriert. (CD: 3)", effect: 'highDamageLowDefense', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Zorniger Wurf", desc: "50% Chance auf sofort doppelten Schaden, 50% Chance auf keinen Schaden. (CD: 2)", effect: 'riskDoubleDamage', cooldown: 2, color: "action-special2" }
+    }},
+    { name: "Pino", atk: 65, luck: 55, rarity: "Selten", weight: 10, abilities: {
+        'base': { name: "Normaler Schlag", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Starker Kopfstoß", desc: "Verursacht erhöhten Schaden (+25%). (CD: 2)", effect: 'damage25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Widerspenstiger Tritt", desc: "Verursacht Basis-Schaden und betäubt den Gegner (50% Chance, dass Gegner im nächsten Zug aussetzt). (CD: 3)", effect: 'stun', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Maria", atk: 40, luck: 80, rarity: "Selten", weight: 10, abilities: {
+        'base': { name: "Italienischer Witz", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Glücksverdopplung", desc: "Erhöht die Glücks-Chance (Luck) in diesem Zug um 50%. (CD: 3)", effect: 'luck50', cooldown: 3, color: "action-special1" },
+        'special2': { name: "Kaffee-Pause", desc: "Heilt 25 HP. Verursacht keinen Schaden in diesem Zug. (CD: 4)", effect: 'heal25', cooldown: 4, color: "action-special2" }
+    }},
+    { name: "Luca", atk: 50, luck: 60, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Stoß", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Schnelle Wunde", desc: "Etwas erhöhter Schaden (+15%). (CD: 1)", effect: 'damage15', cooldown: 1, color: "action-special1" },
+        'special2': { name: "Spaghetti-Reparatur", desc: "Heilt 15 HP. (CD: 3)", effect: 'heal15', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Giulia", atk: 45, luck: 65, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Fächer-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Abwehr-Fächer", desc: "Reduziert den nächsten eingehenden Schaden um 25%. (CD: 2)", effect: 'shield25', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Schneller Stich", desc: "Verursacht 2 Angriffe mit halbem Schaden (Chance auf 2x Crit). (CD: 4)", effect: 'doubleHit', cooldown: 4, color: "action-special2" }
+    }},
+    // Zusätzliche Charaktere mit Basis-Fähigkeiten, falls im Pool, aber hier nicht detailliert
+    { name: "Il Baffo", atk: 75, luck: 45, rarity: "Ungewöhnlich", weight: 15, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Wut", desc: "Erhöhter Schaden (+20%), aber 10 HP Selbstschaden. (CD: 2)", effect: 'damage20Self10', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Einschüchterung", desc: "50% Chance, dass der Gegner im nächsten Zug nur halben Schaden macht. (CD: 3)", effect: 'opponentDamageDown', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "La Nonna", atk: 35, luck: 90, rarity: "Ungewöhnlich", weight: 15, abilities: {
+        'base': { name: "Basis-Klaps", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Trost", desc: "Heilt 20 HP, aber verursacht keinen Schaden. (CD: 2)", effect: 'heal20', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Guacamole", desc: "50% Chance, dass Gegner 10 HP Schaden pro Zug über 2 Runden nimmt (Dot). (CD: 4)", effect: 'poison2', cooldown: 4, color: "action-special2" }
+    }},
+    { name: "Franco", atk: 60, luck: 50, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Kompakt-Angriff", desc: "Verursacht 15% mehr Schaden. (CD: 2)", effect: 'damage15', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Adrenalin", desc: "Erhöht die eigene ATK im nächsten Zug um 30%. (CD: 3)", effect: 'atkBoost30', cooldown: 3, color: "action-special2" }
+    }},
+    { name: "Silvia", atk: 30, luck: 70, rarity: "Gewöhnlich", weight: 20, abilities: {
+        'base': { name: "Basis-Angriff", desc: "Basisangriff", cooldown: 0, color: "action-base" },
+        'special1': { name: "Taktischer Rückzug", desc: "Verursacht 50% weniger Schaden, aber 50% Chance auf keinen eingehenden Schaden in diesem Zug. (CD: 2)", effect: 'avoid50', cooldown: 2, color: "action-special1" },
+        'special2': { name: "Fokus", desc: "Erhöht die eigene LUCK dauerhaft um 5. (CD: 5)", effect: 'luckPerm5', cooldown: 5, color: "action-special2" }
+    }},
 ];
 
-// --- BILDER DATENSTRUKTUR ---
+// --- BILDER DATENSTRUKTUR (Unverändert) ---
 const IMAGE_MAP = {
     "Gert": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603658844.jpg", 
     "Ciro": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760603775510.jpg",
@@ -300,33 +375,50 @@ let isBattling = false;
 let selectedCard = null;  
 let opponentCard = null;  
 
-// Synth-State
-let synthMainCardId = null;
-let synthSacrificeCardId = null;
+// Kampf-Zustand
+let playerHP = 100; 
+let opponentHP = 100; 
+let playerActionPromiseResolve = null; 
+
+// NEU: Cooldowns und temporäre Status-Effekte
+let playerCooldowns = { special1: 0, special2: 0 };
+let playerDefenseBoost = 1; // Multiplikator für eingehenden Schaden (1 = normal, 0.5 = 50% weniger)
+let playerDamageBoost = 1; // Multiplikator für ausgehenden Schaden (1 = normal, 1.5 = 50% mehr)
+let playerNextTurnDamageBoost = 1; // Für Gert's Fähigkeit etc.
+let playerTempLuckBoost = 0; // Für Maria's Fähigkeit
+let opponentNextTurnMiss = false; // Für Pinos Stun
+let opponentDamageOverTime = 0; // Für Nonnas Dot
 
 
 const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char => 
     Array(char.weight).fill(char)
 );
-const XP_PER_LEVEL = 100; // XP benötigt für das nächste Level
-const XP_PER_WIN = 30;    // XP erhalten pro gewonnenem Kampf
+const XP_PER_LEVEL = 100; 
+const XP_PER_WIN = 30;    
 
 
 // 2. SPIELLOGIK (Kernfunktionen)
 
-// Hilfsfunktion für die rundenbasierte Logik (Delay)
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-function showDamagePopup(elementId, damage, isCrit) {
+function showDamagePopup(elementId, damage, isCrit, isHeal = false) {
     const fighterPanel = document.getElementById(elementId);
     const popup = document.createElement('div');
-    popup.textContent = `-${damage}`;
-    popup.classList.add('damage-popup');
-    if (isCrit) {
-        popup.classList.add('crit');
-        popup.textContent = `💥 -${damage}!`;
+    
+    if (isHeal) {
+        popup.textContent = `+${damage}`;
+        popup.style.color = '#4CAF50'; 
+        popup.style.fontSize = '26px';
+    } else {
+        popup.textContent = `-${damage}`;
+        popup.style.color = 'red';
+        if (isCrit) {
+            popup.classList.add('crit');
+            popup.textContent = `💥 -${damage}!`;
+        }
     }
     
+    popup.classList.add('damage-popup');
     const randomX = Math.random() * 20 - 10; 
     popup.style.transform = `translate(calc(-50% + ${randomX}px), 0)`;
 
@@ -351,22 +443,18 @@ function updateHPBar(hpFillId, currentHP) {
     }
 }
 
-// === KORRIGIERTE ANIMATE ATTACK FUNKTION ===
 function animateAttack(attackerElementId, defenderElementId) {
     return new Promise(resolve => {
         const attacker = document.getElementById(attackerElementId);
         const defender = document.getElementById(defenderElementId);
-        // Bestimmt die Klasse basierend auf der ID (z.B. 'player-fighter' -> 'player')
         const attackClass = `attacking-${attackerElementId.split('-')[0]}`;
         
-        // Timeout als Fallback (350ms > 300ms Animation), falls 'animationend' fehlschlägt.
         const timeout = setTimeout(() => {
             attacker.classList.remove(attackClass);
             defender.classList.remove('hit');
             resolve();
         }, 350); 
         
-        // Event Listener, der den Timeout löscht, wenn die Animation regulär endet.
         function handleAnimationEnd() {
             clearTimeout(timeout);
             attacker.classList.remove(attackClass);
@@ -375,34 +463,33 @@ function animateAttack(attackerElementId, defenderElementId) {
             resolve();
         }
         
-        // Listener nur einmal hinzufügen und Animation starten (0.3s)
         attacker.addEventListener('animationend', handleAnimationEnd, { once: true });
         
         attacker.classList.add(attackClass);
         defender.classList.add('hit'); 
     });
 }
-// === ENDE KORRIGIERTE ANIMATE ATTACK FUNKTION ===
 
-function calculateStrength(charData) {
-    // Wenn charData das volle Objekt mit ATK/LUCK ist (Gegner-Karte)
+// Funktion, die LUCK und LUCK-Bonus berücksichtigt
+function calculateStrength(charData, tempLuck = 0) {
     const atk = charData.atk;
-    const luck = charData.luck;
+    const luck = charData.luck + tempLuck; 
     
     const luckRoll = Math.floor(Math.random() * 100) + 1;
     let bonus = 0;
+    let isCrit = false;
     if (luckRoll <= luck) {
-        bonus = (atk * 0.33);
+        bonus = (atk * 0.33); // 33% Bonus-Schaden bei Glückstreffer
+        isCrit = true;
     }
-    return atk + bonus;
+    return { strength: atk + bonus, isCrit: isCrit };
 }
 
-// NEUE FUNKTION: Basiswerte der Karte abrufen
 function getCharacterBaseStats(name) {
     return CHARACTER_POOL.find(c => c.name === name);
 }
 
-// NEUE FUNKTION: Aktuelle Werte basierend auf Level berechnen
+// NEU: Stärkere ATK bei höherem Level berücksichtigen
 function getCharacterCurrentStats(card) {
     const baseStats = getCharacterBaseStats(card.name);
     if (!baseStats) return null;
@@ -417,11 +504,11 @@ function getCharacterCurrentStats(card) {
         luck: Math.min(100, baseStats.luck + luckBonus), 
         rarity: baseStats.rarity,
         level: card.level,
-        xp: card.xp
+        xp: card.xp,
+        abilities: baseStats.abilities // Fügt die Fähigkeiten hinzu
     };
 }
 
-// NEUE FUNKTION: XP erhalten und Level-Up prüfen
 function gainXP(cardId, xp) {
     const card = collection.find(c => c.id === cardId);
     if (!card) return;
@@ -443,8 +530,9 @@ function gainXP(cardId, xp) {
     saveGame();
 }
 
-// NEUE FUNKTION: Fusions-Logik
+// Synth-Funktionen (unverändert)
 function synthCharacter(mainCardId, sacrificeCardId) {
+    // ... (Logik unverändert)
     const mainCard = collection.find(c => c.id === mainCardId);
     const sacrificeCardIndex = collection.findIndex(c => c.id === sacrificeCardId);
 
@@ -468,10 +556,8 @@ function synthCharacter(mainCardId, sacrificeCardId) {
     else if (rarity === "Episch") xpGained = 200;
     else if (rarity === "Legendär") xpGained = 300;
     
-    // 1. Opferkarte aus der Sammlung entfernen
     collection.splice(sacrificeCardIndex, 1);
     
-    // 2. Hauptkarte erhält XP (prüft auf Level-Up)
     let levelUps = 0;
     mainCard.xp += xpGained;
 
@@ -481,7 +567,6 @@ function synthCharacter(mainCardId, sacrificeCardId) {
         levelUps++;
     }
     
-    // 3. Status zurücksetzen und speichern
     synthMainCardId = null;
     synthSacrificeCardId = null;
     saveGame();
@@ -495,10 +580,8 @@ function synthCharacter(mainCardId, sacrificeCardId) {
     return message;
 }
 
-
 function drawCard() {
     const baseCard = DRAW_WEIGHTS[Math.floor(Math.random() * DRAW_WEIGHTS.length)];
-    // NEU: Neue Karten erhalten Startwerte
     const newCard = {
         id: nextCardId++,
         name: baseCard.name,
@@ -508,94 +591,315 @@ function drawCard() {
     return newCard;
 }
 
-// === ASYNCHRONE BATTLE-FUNKTION ===
+// NEUE FUNKTION: Generiert und zeigt die Aktionsbuttons an
+function showActionButtons(playerStats) {
+    const actionContainer = document.getElementById('battle-actions');
+    actionContainer.innerHTML = '';
+    
+    const actions = playerStats.abilities;
+
+    ['base', 'special1', 'special2'].forEach(key => {
+        const ability = actions[key];
+        const button = document.createElement('button');
+        button.className = ability.color;
+        button.setAttribute('data-action', key);
+        
+        let cooldownText = '';
+        let isDisabled = false;
+
+        // Nur für Spezialfähigkeiten Cooldown prüfen
+        if (key !== 'base') {
+            if (playerCooldowns[key] > 0) {
+                cooldownText = `<div class="cooldown-overlay">${playerCooldowns[key]}</div>`;
+                isDisabled = true;
+            }
+        }
+        
+        button.innerHTML = `
+            <strong>${ability.name}</strong><br>
+            <span style="font-size: 11px;">${ability.desc}</span>
+            ${cooldownText}
+        `;
+        button.disabled = isDisabled;
+        button.onclick = () => selectAction(key);
+        
+        actionContainer.appendChild(button);
+    });
+    
+    actionContainer.style.display = 'flex';
+}
+
+// NEUE FUNKTION: Wartet auf die Spieleraktion
+function waitForPlayerAction(playerStats) {
+    showActionButtons(playerStats);
+    return new Promise(resolve => {
+        playerActionPromiseResolve = resolve;
+    });
+}
+
+// NEUE FUNKTION: Wird beim Klick auf einen Aktionsbutton aufgerufen
+function selectAction(actionKey) {
+    if (playerActionPromiseResolve) {
+        // Cooldown für Spezialfähigkeiten setzen
+        const ability = getCharacterCurrentStats(selectedCard).abilities[actionKey];
+        if (actionKey !== 'base' && ability.cooldown > 0) {
+            playerCooldowns[actionKey] = ability.cooldown;
+        }
+
+        // Versteckt das Aktionsmenü
+        document.getElementById('battle-actions').style.display = 'none';
+        playerActionPromiseResolve(actionKey); // Setzt den Kampf fort
+    }
+}
+
+
+// === ASYNCHRONE BATTLE-FUNKTION (Großes Update) ===
 async function battle() {
     if (isBattling || !selectedCard || !opponentCard) return;
 
     isBattling = true; 
     
-    let playerHP = 100;
-    let opponentHP = 100;
+    // Status initialisieren/zurücksetzen
+    playerHP = 100;
+    opponentHP = 100;
+    playerCooldowns = { special1: 0, special2: 0 };
+    playerDefenseBoost = 1; 
+    playerDamageBoost = 1;
+    playerNextTurnDamageBoost = 1;
+    playerTempLuckBoost = 0;
+    opponentNextTurnMiss = false;
+    opponentDamageOverTime = 0;
     
     document.getElementById('start-battle-button').disabled = true;
     document.getElementById('open-pack-button').disabled = true;
 
+    // Aktuelle Stats abrufen (für Level-Berechnung)
     const playerStats = getCharacterCurrentStats(selectedCard);
     
-    // KAMPF VISUALISIERUNG START
+    // Visualisierung vorbereiten
     document.getElementById('player-img').src = IMAGE_MAP[selectedCard.name] || IMAGE_MAP["Standard"];
     document.getElementById('opponent-img').src = IMAGE_MAP[opponentCard.name] || IMAGE_MAP["Standard"];
     
     document.getElementById('player-fighter').style.border = '';
     document.getElementById('opponent-fighter').style.border = '';
     
-    // Initiales HP-Update mit Level-Anzeige
-    document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
-    document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
-    updateHPBar('player-hp-fill', playerHP);
-    updateHPBar('opponent-hp-fill', opponentHP);
+    const updateBattleStats = () => {
+        const currentStats = getCharacterCurrentStats(selectedCard); // Neu laden, da LUCK permanent steigen kann (Silvia)
+        document.getElementById('player-stats').innerHTML = `**${currentStats.name}** (Lv. ${currentStats.level})<br>ATK: ${currentStats.atk * playerDamageBoost} [Boost], LUCK: ${currentStats.luck}%<br>HP: ${playerHP}`;
+        document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
+        updateHPBar('player-hp-fill', playerHP);
+        updateHPBar('opponent-hp-fill', opponentHP);
+    };
+    
+    updateBattleStats();
 
 
     document.getElementById('game-messages').innerHTML = `<h2 class="battle-title">⚔️ KAMPF STARTET! ${playerStats.name} (Lv. ${playerStats.level}) vs. ${opponentCard.name} ⚔️</h2>`;
 
     
     // --- HAUPTSCHLEIFE FÜR DEN RUNDENBASIERTEN KAMPF ---
+    let turn = 1;
     while (playerHP > 0 && opponentHP > 0) {
+        document.getElementById('game-messages').innerHTML += `<br>--- **RUNDE ${turn++}** ---`;
         
-        // --- 1. RUNDE: SPIELER-ANGRIFF ---
-        
-        await animateAttack('player-fighter', 'opponent-fighter');
-        
-        let playerStrength = calculateStrength(playerStats);
-        let playerDamage = Math.max(1, Math.round(playerStrength / 10)); 
-        let isPlayerCrit = false;
-        
-        let critMessage = "";
-        if (playerStrength > playerStats.atk) { 
-            playerDamage = Math.round(playerDamage * 1.5); 
-            critMessage = "⭐ Kritischer Glückstreffer!";
-            isPlayerCrit = true;
+        // 0. Cooldowns herunterzählen
+        for (const key in playerCooldowns) {
+            if (playerCooldowns[key] > 0) {
+                playerCooldowns[key]--;
+            }
         }
         
+        // Temporäre Buffs (Defense) speichern und zurücksetzen (Damage/Luck)
+        const currentDefenseBoost = playerDefenseBoost;
+        playerDefenseBoost = 1; // Defense Boost ist immer nur für EINEN Gegnerzug gültig
+        
+        playerDamageBoost = playerNextTurnDamageBoost;
+        playerNextTurnDamageBoost = 1;
+        playerTempLuckBoost = 0; // Temporärer Luck Boost ist nur für EINEN eigenen Zug gültig
+        
+        updateBattleStats(); // UI-Update nach Buff-Reset
+        
+        // ----------------------------------------------------
+        // --- 1. RUNDE: SPIELER-ANGRIFF (Wartet auf Auswahl) ---
+        // ----------------------------------------------------
+        
+        const playerSelectedAction = await waitForPlayerAction(playerStats);
+        
+        const actionDetails = playerStats.abilities[playerSelectedAction];
+        let actionMessage = `${playerStats.name} wählt **${actionDetails.name}**!`;
+        let playerDamage = 0;
+        let isPlayerCrit = false;
+        
+        // Spezialeffekte VOR dem Angriff anwenden (Heilung, Selbstschaden, Luck-Boost)
+        if (actionDetails.effect === 'heal25' || actionDetails.effect === 'heal20' || actionDetails.effect === 'heal15') {
+            const healAmount = parseInt(actionDetails.effect.replace('heal', ''));
+            playerHP += healAmount;
+            playerHP = Math.min(100, playerHP);
+            showDamagePopup('player-fighter', healAmount, false, true);
+            actionMessage += ` **+${healAmount} HP** geheilt!`;
+        }
+        
+        if (actionDetails.effect === 'luck50') {
+            playerTempLuckBoost = 50;
+            actionMessage += ` **LUCK +50** für diesen Angriff!`;
+        }
+
+        // --- SCHADENSBERECHNUNG ---
+        const { strength: playerStrength, isCrit: critRoll } = calculateStrength(playerStats, playerTempLuckBoost);
+        isPlayerCrit = critRoll;
+        
+        let baseDamage = Math.max(1, Math.round(playerStrength / 10));
+
+        // Multi-Hit
+        let hitCount = actionDetails.effect === 'doubleHit' ? 2 : 1;
+        let totalDamage = 0;
+        
+        await animateAttack('player-fighter', 'opponent-fighter');
+
+        for (let i = 0; i < hitCount; i++) {
+            let currentHitDamage = baseDamage;
+
+            // Luck und Crit-Schaden anwenden (wenn nicht schon geschehen)
+            if (i === 0) { // Nur einmal Crit prüfen, oder bei Multi-Hit jedes Mal? Hier: Jedes Mal, aber nur der Base-Schaden wird geteilt.
+                if (isPlayerCrit) {
+                    currentHitDamage = Math.round(currentHitDamage * 1.5);
+                    actionMessage += " ⭐ Glückstreffer!";
+                }
+            }
+            
+            // Spieler-Damage-Boosts anwenden (aus Franco's Fähigkeit oder Gert's Doppelter Wetteinsatz)
+            currentHitDamage = Math.round(currentHitDamage * playerDamageBoost); 
+
+            // AKTIONSSPEZIFISCHE SCHADENSMODIFIKATIONEN
+            if (actionDetails.effect === 'doubleNextTurn') {
+                playerNextTurnDamageBoost = 2; // setzt Buff für nächsten Zug
+                currentHitDamage = Math.round(currentHitDamage * 1.0); // Basis-Schaden
+                actionMessage += " (Bereitet Doppelangriff für nächste Runde vor)";
+            } else if (actionDetails.effect === 'shield40') {
+                playerDefenseBoost = 0.6; // 40% Schild
+                currentHitDamage = Math.round(currentHitDamage * 0.7); // 30% weniger Schaden in diesem Zug
+            } else if (actionDetails.effect === 'damage25') {
+                currentHitDamage = Math.round(currentHitDamage * 1.25);
+            } else if (actionDetails.effect === 'damage15' || actionDetails.effect === 'kompakt') {
+                currentHitDamage = Math.round(currentHitDamage * 1.15);
+            } else if (actionDetails.effect === 'highDamageLowDefense') {
+                currentHitDamage = Math.round(currentHitDamage * 1.4); // 40% mehr Schaden
+                playerDefenseBoost = 2.0; // Doppelt so viel Schaden nehmen im nächsten Zug
+            } else if (actionDetails.effect === 'riskDoubleDamage') {
+                if (Math.random() < 0.5) { 
+                    currentHitDamage *= 2; 
+                    actionMessage += " 💥 SOFORT DOPPELT!";
+                } else {
+                    currentHitDamage = 0; 
+                    actionMessage += " 💧 KEIN SCHADEN verursacht!";
+                }
+            } else if (actionDetails.effect === 'avoid50') {
+                currentHitDamage = Math.round(currentHitDamage * 0.5); // 50% weniger Schaden
+                if (Math.random() < 0.5) {
+                    currentDefenseBoost = 0; // 50% Chance, 100% Schaden zu vermeiden
+                    actionMessage += " 👻 Gegner-Angriff in diesem Zug zu 100% abgewehrt!";
+                }
+            } else if (actionDetails.effect === 'doubleHit') {
+                currentHitDamage = Math.round(currentHitDamage * 0.5); // Halber Schaden pro Hit
+                actionMessage += (i === 0 ? " [Hit 1]" : " [Hit 2]");
+            } else if (actionDetails.effect === 'stun') {
+                 if (Math.random() < 0.5) {
+                    opponentNextTurnMiss = true;
+                    actionMessage += " 😵 Gegner für nächsten Zug betäubt!";
+                }
+            } else if (actionDetails.effect === 'poison2') {
+                if (Math.random() < 0.5) {
+                    opponentDamageOverTime = 2;
+                    actionMessage += " 🤢 Gegner vergiftet (2 Runden)!";
+                }
+            } else if (actionDetails.effect === 'luckPerm5') {
+                selectedCard.luck += 5;
+                actionMessage += " ✨ LUCK permanent um 5 erhöht!";
+            } else if (actionDetails.effect === 'damage20Self10') {
+                currentHitDamage = Math.round(currentHitDamage * 1.20);
+                playerHP -= 10;
+                playerHP = Math.max(0, playerHP);
+                showDamagePopup('player-fighter', 10, false, false);
+                actionMessage += " (10 HP Selbstschaden erlitten)";
+            } else if (actionDetails.effect === 'atkBoost30') {
+                playerNextTurnDamageBoost = 1.3;
+                actionMessage += " (ATK-Boost für nächsten Zug vorbereitet)";
+            }
+            
+            // Angriff ausführen und Schaden anzeigen
+            if (currentHitDamage > 0) {
+                 totalDamage += currentHitDamage;
+                 showDamagePopup('opponent-fighter', currentHitDamage, false);
+            }
+            
+            await delay(i > 0 ? 500 : 0); // Kurze Pause bei Multi-Hit
+        }
+        
+        playerDamage = totalDamage;
         opponentHP -= playerDamage;
         opponentHP = Math.max(0, opponentHP);
 
-        showDamagePopup('opponent-fighter', playerDamage, isPlayerCrit);
+        // UI Updates
+        document.getElementById('game-messages').innerHTML += `<p>${actionMessage}. Verursacht insgesamt **${playerDamage}** Schaden.</p>`;
         
-        document.getElementById('game-messages').innerHTML += `<p>💥 ${playerStats.name} greift an! Verursacht ${playerDamage} Schaden. ${critMessage}</p>`;
-        
-        document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
-        updateHPBar('opponent-hp-fill', opponentHP);
+        updateBattleStats();
         
         if (opponentHP <= 0) break;
 
-        // --- 2. RUNDE: GEGNER-ANGRIFF ---
-        await delay(1000); 
-        
-        await animateAttack('opponent-fighter', 'player-fighter');
-
-        let opponentStrength = calculateStrength(opponentCard);
-        let opponentDamage = Math.max(1, Math.round(opponentStrength / 10));
-        let isOpponentCrit = false;
-        
-        let opponentCritMessage = "";
-        if (opponentStrength > opponentCard.atk) {
-            opponentDamage = Math.round(opponentDamage * 1.5);
-            opponentCritMessage = "⭐ Kritischer Glückstreffer!";
-            isOpponentCrit = true;
+        // ----------------------------------------------------
+        // --- 1.5. Schaden-über-Zeit (DoT) für Gegner ---
+        // ----------------------------------------------------
+        if (opponentDamageOverTime > 0) {
+            opponentHP -= 10;
+            opponentHP = Math.max(0, opponentHP);
+            showDamagePopup('opponent-fighter', 10, false);
+            document.getElementById('game-messages').innerHTML += `<p style="color: green;">🤢 Gegner verliert 10 HP durch Vergiftung (noch ${opponentDamageOverTime - 1} Runden).</p>`;
+            opponentDamageOverTime--;
+            updateBattleStats();
+            if (opponentHP <= 0) break;
         }
-        
-        playerHP -= opponentDamage;
-        playerHP = Math.max(0, playerHP);
-        
-        showDamagePopup('player-fighter', opponentDamage, isOpponentCrit);
 
-        document.getElementById('game-messages').innerHTML += `<p>💔 ${opponentCard.name} schlägt zurück! Erleidet ${opponentDamage} Schaden. ${opponentCritMessage}</p>`;
-
-        document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
-        updateHPBar('player-hp-fill', playerHP);
+        // ----------------------------------------------------
+        // --- 2. RUNDE: GEGNER-ANGRIFF (KI-gesteuert) ---
+        // ----------------------------------------------------
+        await delay(1500); 
         
-        await delay(1000); // Verzögerung zwischen den Runden
+        if (opponentNextTurnMiss) {
+            document.getElementById('game-messages').innerHTML += `<p>😴 **Pino's Betäubung** hält an! Gegner setzt diesen Zug aus.</p>`;
+            opponentNextTurnMiss = false;
+        } else {
+            await animateAttack('opponent-fighter', 'player-fighter');
+
+            const { strength: opponentStrength, isCrit: isOpponentCrit } = calculateStrength(opponentCard);
+            let opponentDamage = Math.max(1, Math.round(opponentStrength / 10));
+            
+            let opponentCritMessage = "";
+            if (isOpponentCrit) {
+                opponentDamage = Math.round(opponentDamage * 1.5);
+                opponentCritMessage = "⭐ Kritischer Glückstreffer!";
+            }
+            
+            // Wende Spieler-Verteidigungs-Boost an
+            let damageReceived = Math.round(opponentDamage * currentDefenseBoost);
+            
+            if (currentDefenseBoost < 1) {
+                opponentCritMessage += ` 🛡️ Schaden um ${Math.round((1 - currentDefenseBoost) * 100)}% reduziert!`;
+            } else if (currentDefenseBoost > 1) {
+                 opponentCritMessage += ` 💔 Schaden um ${Math.round((currentDefenseBoost - 1) * 100)}% ERHÖHT! (Schwäche)`;
+            }
+
+            playerHP -= damageReceived;
+            playerHP = Math.max(0, playerHP);
+            
+            showDamagePopup('player-fighter', damageReceived, false);
+
+            document.getElementById('player-stats').innerHTML = `**${playerStats.name}** (Lv. ${playerStats.level})<br>ATK: ${playerStats.atk}, LUCK: ${playerStats.luck}%<br>HP: ${playerHP}`;
+            updateHPBar('player-hp-fill', playerHP);
+
+            document.getElementById('game-messages').innerHTML += `<p>💔 ${opponentCard.name} schlägt zurück! Erleidet **${damageReceived}** Schaden. ${opponentCritMessage}</p>`;
+        }
+
+        await delay(1000); 
     }
 
     // --- KAMPF ENDE & ERGEBNIS ---
@@ -603,6 +907,8 @@ async function battle() {
     document.getElementById('start-battle-button').disabled = false; 
     document.getElementById('open-pack-button').disabled = false; 
     
+    document.getElementById('battle-actions').style.display = 'none'; // Aktionsmenü ausblenden
+
     await delay(2000); 
 
     let finalMessage = "";
@@ -623,8 +929,7 @@ async function battle() {
     updateUI(); 
 }
 
-
-// --- Pack-Öffnung (mit neuer Datenstruktur) ---
+// Pack-Öffnung und Speicher-Logik (unverändert)
 async function openPack() {
     const packButton = document.getElementById('open-pack-button');
     if (coins < 3) {
@@ -688,7 +993,6 @@ async function openPack() {
     updateUI();
 }
 
-
 // 3. SPIELSTAND SPEICHERN & LADEN
 function saveGame() {
     localStorage.setItem('brainrotCoins', coins);
@@ -696,7 +1000,6 @@ function saveGame() {
     localStorage.setItem('brainrotNextCardId', nextCardId);
 }
 
-// NEU: Ladefunktion mit Startkarten-Check
 function loadGame() {
     coins = parseInt(localStorage.getItem('brainrotCoins')) || 0;
     nextCardId = parseInt(localStorage.getItem('brainrotNextCardId')) || 1;
@@ -704,7 +1007,6 @@ function loadGame() {
     let loadedCollection;
     try {
         loadedCollection = JSON.parse(localStorage.getItem('brainrotCollection'));
-        // Sicherheitscheck: Überprüfen, ob die geladene Collection ein Array ist
         if (!Array.isArray(loadedCollection)) {
             loadedCollection = [];
         }
@@ -714,14 +1016,12 @@ function loadGame() {
     
     collection = loadedCollection;
 
-    // --- INITIALISIERUNGS-CHECK FÜR STARTKARTEN ---
     if (collection.length === 0) {
-        // Füge die 3 Startkarten hinzu, falls die Sammlung leer ist (z.B. beim ersten Start oder nach einem Datenfehler)
+        // Starte mit Luca (Heilung) und Franco (Boost)
         collection.push({ id: nextCardId++, name: "Luca", level: 1, xp: 0 });
         collection.push({ id: nextCardId++, name: "Franco", level: 1, xp: 0 });
-        collection.push({ id: nextCardId++, name: "Pino", level: 1, xp: 0 });
+        collection.push({ id: nextCardId++, name: "Silvia", level: 1, xp: 0 });
         
-        // Füge Startmünzen hinzu, damit man sofort ein Pack öffnen kann
         if (coins < 3) coins = 3; 
 
         document.getElementById('game-messages').innerHTML = "Spiel neu initialisiert! Du hast deine Startkarten und 3 Münzen erhalten.";
@@ -731,12 +1031,10 @@ function loadGame() {
 
 
 // 4. UI-MANIPULATION
-
 function updateUI() {
-    // 1. Münzen aktualisieren
+    // ... (Logik unverändert, da die Buttons im Kampf nun dynamisch generiert werden)
     document.getElementById('coin-display').textContent = `Münzen: ${coins}`;
     
-    // 2. Sammlung aktualisieren
     const collectionList = document.getElementById('collection-list');
     collectionList.innerHTML = ''; 
     
@@ -766,7 +1064,6 @@ function updateUI() {
         collectionList.appendChild(li);
     });
     
-    // 3. Auswahlfeld für den Kampf aktualisieren
     const charSelect = document.getElementById('char-select');
     const selectedId = charSelect.value;
     charSelect.innerHTML = '';
@@ -782,19 +1079,17 @@ function updateUI() {
             const stats = getCharacterCurrentStats(card);
             const option = document.createElement('option');
             option.value = card.id;
-            option.textContent = `${card.name} (Lv. ${card.level}) - ATK: ${stats.atk}`;
+            option.textContent = `${card.name} (Lv. ${stats.level}) - ATK: ${stats.atk}`;
             if (String(card.id) === selectedId) {
                 option.selected = true;
             }
             charSelect.appendChild(option);
         });
         
-        // Setze selectedCard auf das aktuell ausgewählte Objekt oder die erste Karte
         const currentSelectionId = parseInt(charSelect.value);
         selectedCard = collection.find(c => c.id === currentSelectionId) || selectableCards[0];
     }
 
-    // 4. Synth-Status aktualisieren
     updateSynthUI();
 }
 
@@ -861,7 +1156,6 @@ async function handleFightClick() {
         return;
     }
     
-    // Gegner ist immer eine zufällige Basis-Karte (kein Level-System für Gegner)
     const opponentBase = drawCard();
     opponentCard = getCharacterBaseStats(opponentBase.name); // Gegner kämpft mit Basis-Stats
 
@@ -875,8 +1169,8 @@ async function handlePackClick() {
 
 // Initialer Aufruf
 window.onload = () => {
-    loadGame(); // Lädt den Spielstand ODER initialisiert die Startkarten
-    updateUI(); // Aktualisiert die UI mit den geladenen/initialisierten Daten
+    loadGame(); 
+    updateUI(); 
 };
 
 // --- ENDE DES JAVASCRIPT CODES ---

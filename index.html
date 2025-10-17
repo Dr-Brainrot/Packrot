@@ -7,15 +7,26 @@
     
     <style>
 /* --- CSS für das Design --- */
+body {
+    background-color: #f0f2f5; /* Leichter grauer Hintergrund */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
 .brainrot-game {
     padding: 25px;
     max-width: 600px;
+    width: 90%; /* Responsive Breite */
     margin: 20px auto;
     border: 3px solid #d32f2f; /* Rot für Italian Vibe */
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     font-family: 'Arial', sans-serif;
+    position: relative; /* Für Pack-Overlay */
+    overflow: hidden; /* Verhindert Scrollen durch überlappende Animation */
 }
 .brainrot-game h2 {
     color: #d32f2f;
@@ -97,7 +108,6 @@
     padding: 10px;
     border-radius: 8px;
     min-height: 250px; /* Einheitliche Höhe */
-    /* Fügt eine Transition für weiche Übergänge hinzu */
     transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
 }
 .char-img {
@@ -120,38 +130,27 @@
     margin: 5px 0 0 0;
 }
 
-/* --- NEUE CSS-ANIMATIONEN FÜR DEN ANGRIFF --- */
-
-/* Animation für den Spieler (bewegt sich nach rechts) */
+/* --- CSS-ANIMATIONEN FÜR DEN ANGRIFF --- */
 @keyframes attack-right {
     0% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-    50% { transform: translateX(15px); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); } /* Roter Schatten beim Angriff */
+    50% { transform: translateX(15px); box-shadow: 0 0 15px rgba(211, 47, 47, 0.8); }
     100% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
 }
-
-/* Animation für den Gegner (bewegt sich nach links) */
 @keyframes attack-left {
     0% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-    50% { transform: translateX(-15px); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); } /* Blauer Schatten beim Angriff */
+    50% { transform: translateX(-15px); box-shadow: 0 0 15px rgba(25, 118, 210, 0.8); }
     100% { transform: translateX(0); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
 }
-
-/* Klasse, die der Spieler-Kämpfer erhält, wenn er angreift */
 .fighter-panel.attacking-player {
     animation: attack-right 0.3s ease-in-out;
 }
-
-/* Klasse, die der Gegner-Kämpfer erhält, wenn er angreift */
 .fighter-panel.attacking-opponent {
     animation: attack-left 0.3s ease-in-out;
 }
-
-/* Zusätzlicher visueller Effekt für den Angegriffenen (Zittern) */
 .fighter-panel.hit {
     animation: shake 0.2s;
     border-color: #ff0000;
 }
-
 @keyframes shake {
   0% { transform: translate(1px, 1px) rotate(0deg); }
   25% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -160,7 +159,85 @@
   100% { transform: translate(0px, 0px) rotate(0deg); }
 }
 
-</style>
+/* --- NEUES CSS FÜR PACK-ÖFFNUNGS-ANIMATION --- */
+#pack-opening-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Über allem anderen */
+    opacity: 0; /* Standardmäßig versteckt */
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out;
+}
+#pack-opening-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.card-reveal-container {
+    perspective: 1000px; /* Ermöglicht 3D-Transformation */
+    width: 180px; /* Größe der Karte */
+    height: 250px;
+    position: relative;
+    cursor: pointer;
+}
+.card-front, .card-back {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    backface-visibility: hidden; /* Versteckt die Rückseite beim Drehen */
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+    transition: transform 0.8s ease-in-out;
+    background-size: cover;
+    background-position: center;
+}
+.card-front {
+    background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png'); /* Bild für die Kartenrückseite */
+    transform: rotateY(0deg);
+}
+.card-back { /* Dies ist tatsächlich die Vorderseite der gezogenen Karte */
+    background-image: url('https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg'); /* Standard-Kartenbild */
+    transform: rotateY(180deg);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* Text unten */
+    align-items: center;
+    color: white;
+    text-shadow: 1px 1px 3px black;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    text-align: center;
+    font-weight: bold;
+}
+.card-reveal-container.revealed .card-front {
+    transform: rotateY(-180deg);
+}
+.card-reveal-container.revealed .card-back {
+    transform: rotateY(0deg);
+}
+
+/* Text auf der gezogenen Karte */
+#revealed-card-info {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    padding: 0 5px;
+    box-sizing: border-box;
+    /* Hintergrund für bessere Lesbarkeit */
+    background-color: rgba(0,0,0,0.4); 
+    border-radius: 0 0 8px 8px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+    </style>
 </head>
 <body>
 
@@ -173,7 +250,7 @@
     <select id="char-select"></select>
     
     <button class="fight-button" id="start-battle-button" onclick="handleFightClick()">⚔️ Starte Kampf</button>
-    <button class="pack-button" onclick="handlePackClick()">🎁 Pack öffnen (3 Münzen)</button>
+    <button class="pack-button" id="open-pack-button" onclick="handlePackClick()">🎁 Pack öffnen (3 Münzen)</button>
     
     <hr>
 
@@ -197,6 +274,15 @@
     
     <h3>Deine Sammlung:</h3>
     <ul id="collection-list"></ul>
+
+    <div id="pack-opening-overlay">
+        <div class="card-reveal-container" id="card-reveal-container">
+            <div class="card-front"></div>
+            <div class="card-back" id="revealed-card-image">
+                <div id="revealed-card-info"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -228,7 +314,8 @@ const IMAGE_MAP = {
     "Giulia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604449953.jpg",
     "Franco": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604049720.jpg",
     "Silvia": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760604414423.jpg",
-    "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg" 
+    "Standard": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/1760651693496.jpg",
+    "CardBack": "https://raw.githubusercontent.com/Dr-Brainrot/Packrot/main/bilder/card_back.png" // Neue URL für Kartenrückseite
 };
 
 // --- GLOBALE ZUSTANDSVARIABLEN ---
@@ -249,7 +336,7 @@ const DRAW_WEIGHTS = CHARACTER_POOL.flatMap(char =>
 // Hilfsfunktion für die rundenbasierte Logik (Delay)
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// --- NEUE FUNKTION FÜR DIE ANIMATION ---
+// --- NEUE FUNKTION FÜR DIE KAMPF-ANIMATION ---
 function animateAttack(attackerElementId, defenderElementId) {
     return new Promise(resolve => {
         const attacker = document.getElementById(attackerElementId);
@@ -257,11 +344,9 @@ function animateAttack(attackerElementId, defenderElementId) {
         
         // 1. Animation starten
         attacker.classList.add(`attacking-${attackerElementId.split('-')[0]}`);
-        defender.classList.add('hit'); // Verteidiger zittert
+        defender.classList.add('hit'); 
         
-        // 2. Event-Listener für das Ende der Animation
         function handleAnimationEnd() {
-            // 3. Klassen entfernen und Promise auflösen
             attacker.classList.remove(`attacking-${attackerElementId.split('-')[0]}`);
             defender.classList.remove('hit');
             attacker.removeEventListener('animationend', handleAnimationEnd);
@@ -298,6 +383,7 @@ async function battle() {
     let opponentHP = 100;
     
     document.getElementById('start-battle-button').disabled = true;
+    document.getElementById('open-pack-button').disabled = true; // Pack-Button auch während des Kampfes deaktivieren
 
     // KAMPF VISUALISIERUNG START
     document.getElementById('player-img').src = IMAGE_MAP[selectedCard.name] || IMAGE_MAP["Standard"];
@@ -317,9 +403,8 @@ async function battle() {
         
         // --- 1. RUNDE: SPIELER-ANGRIFF ---
         
-        // **NEU:** Animation VOR dem Schaden anzeigen
         await animateAttack('player-fighter', 'opponent-fighter');
-        await delay(300); // Kurze Pause nach der Animation, bevor der Text erscheint
+        await delay(300); 
         
         let playerStrength = calculateStrength(selectedCard);
         let playerDamage = Math.max(1, Math.round(playerStrength / 10)); 
@@ -335,17 +420,15 @@ async function battle() {
 
         document.getElementById('game-messages').innerHTML += `<p>💥 ${selectedCard.name} greift an! Verursacht ${playerDamage} Schaden. ${critMessage}</p>`;
         
-        // HP-Anzeige aktualisieren
         document.getElementById('opponent-stats').innerHTML = `**${opponentCard.name}**<br>ATK: ${opponentCard.atk}, LUCK: ${opponentCard.luck}%<br>HP: ${opponentHP}`;
         
         if (opponentHP <= 0) break;
 
         // --- 2. RUNDE: GEGNER-ANGRIFF ---
-        await delay(1000); // Kurze Pause zwischen den Zügen
+        await delay(1000); 
         
-        // **NEU:** Animation VOR dem Schaden anzeigen
         await animateAttack('opponent-fighter', 'player-fighter');
-        await delay(300); // Kurze Pause nach der Animation, bevor der Text erscheint
+        await delay(300); 
 
         let opponentStrength = calculateStrength(opponentCard);
         let opponentDamage = Math.max(1, Math.round(opponentStrength / 10));
@@ -361,13 +444,13 @@ async function battle() {
 
         document.getElementById('game-messages').innerHTML += `<p>💔 ${opponentCard.name} schlägt zurück! Erleidet ${opponentDamage} Schaden. ${opponentCritMessage}</p>`;
 
-        // HP-Anzeige aktualisieren
         document.getElementById('player-stats').innerHTML = `**${selectedCard.name}**<br>ATK: ${selectedCard.atk}, LUCK: ${selectedCard.luck}%<br>HP: ${playerHP}`;
     }
 
     // --- KAMPF ENDE & ERGEBNIS ---
     isBattling = false; 
     document.getElementById('start-battle-button').disabled = false; 
+    document.getElementById('open-pack-button').disabled = false; // Pack-Button wieder aktivieren
     
     await delay(2000); 
 
@@ -390,18 +473,68 @@ async function battle() {
 // === ENDE DER BATTLE-FUNKTION ===
 
 
-function openPack() {
+// --- NEUE ASYNCHRONE openPack Funktion für die Animation ---
+async function openPack() {
     if (coins < 3) {
-        return "FEHLER: Du brauchst 3 Münzen!";
+        document.getElementById('game-messages').innerHTML = "FEHLER: Du brauchst 3 Münzen!";
+        return;
     }
 
+    // Buttons deaktivieren
+    document.getElementById('open-pack-button').disabled = true;
+    document.getElementById('start-battle-button').disabled = true;
+
     coins -= 3;
+    saveGame(); // Münzen abziehen und speichern
+    updateUI(); // Münzanzeige aktualisieren
+    
     const newCard = drawCard();
     collection[newCard.name] = (collection[newCard.name] || 0) + 1;
 
+    const overlay = document.getElementById('pack-opening-overlay');
+    const cardRevealContainer = document.getElementById('card-reveal-container');
+    const revealedCardImage = document.getElementById('revealed-card-image');
+    const revealedCardInfo = document.getElementById('revealed-card-info');
+
+    // Overlay anzeigen und Pack-Rückseite einstellen
+    overlay.classList.add('active');
+    cardRevealContainer.classList.remove('revealed'); // Sicherstellen, dass die Karte zuerst die Rückseite zeigt
+    revealedCardImage.style.backgroundImage = `url('${IMAGE_MAP[newCard.name] || IMAGE_MAP["Standard"]}')`;
+    revealedCardInfo.innerHTML = ``; // Info leeren, bis Karte enthüllt ist
+
+    await delay(500); // Kurze Pause, damit Overlay sichtbar wird
+
+    // Karte umdrehen
+    cardRevealContainer.classList.add('revealed');
+    
+    await delay(1000); // Warten, bis die Karte vollständig umgedreht ist (muss zur CSS transition passen)
+
+    // Details der Karte anzeigen
+    revealedCardInfo.innerHTML = `
+        <strong>${newCard.name}</strong><br>
+        (${newCard.rarity})<br>
+        ATK: ${newCard.atk}, LUCK: ${newCard.luck}%
+    `;
+
+    document.getElementById('game-messages').innerHTML = `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${newCard.rarity})!`;
+    
+    // Auf Klick warten, um Overlay zu schließen
+    await new Promise(resolve => {
+        overlay.onclick = () => {
+            overlay.classList.remove('active');
+            overlay.onclick = null; // Event Listener entfernen
+            resolve();
+        };
+    });
+    
+    // Buttons wieder aktivieren
+    document.getElementById('open-pack-button').disabled = false;
+    document.getElementById('start-battle-button').disabled = false;
+
     saveGame();
-    return `🎉 Glückwunsch! Du hast gezogen: **${newCard.name}** (${newCard.rarity})!\nATK: ${newCard.atk}, LUCK: ${newCard.luck}`;
+    updateUI();
 }
+
 
 // 3. SPIELSTAND SPEICHERN (LOCAL STORAGE)
 function saveGame() {
@@ -475,15 +608,13 @@ async function handleFightClick() {
     selectedCard = CHARACTER_POOL.find(c => c.name === selectedCharName);
     opponentCard = drawCard(); 
 
-    // await battle() ist korrekt
     await battle(); 
     updateUI();
 }
 
-function handlePackClick() {
-    const result = openPack();
-    document.getElementById('game-messages').innerHTML = result;
-    updateUI();
+// handlePackClick ruft jetzt die neue asynchrone openPack Funktion auf
+async function handlePackClick() {
+    await openPack();
 }
 
 // Initialer Aufruf, wenn die Seite geladen wird
